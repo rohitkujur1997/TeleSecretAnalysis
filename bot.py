@@ -12,6 +12,10 @@ from firebase_admin import credentials, firestore
 from datetime import datetime
 from io import BytesIO
 import logging
+import yfinance as yf
+import matplotlib.pyplot as plt
+import pandas as pd
+from datetime import datetime
 logging.basicConfig(level=logging.INFO)
 task_queue = asyncio.Queue()
 
