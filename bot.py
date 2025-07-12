@@ -1,16 +1,9 @@
-import os, re, mimetypes, json, requests, asyncio, pytz
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+import os, asyncio
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
 from telegram import Update, BotCommand, MenuButtonCommands
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
-from telethon.errors.rpcerrorlist import PhoneNumberInvalidError
-from telethon.errors import FloodWaitError
-from telethon.tl.types import PeerChannel, MessageMediaDocument, MessageMediaPhoto, Document
-import firebase_admin
-from firebase_admin import credentials, firestore
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
 from datetime import datetime
-from io import BytesIO
 import logging
 import yfinance as yf
 import matplotlib.pyplot as plt
