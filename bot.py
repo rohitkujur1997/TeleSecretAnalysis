@@ -31,7 +31,7 @@ async def analysis(update:Update,context: ContextTypes.DEFAULT_TYPE):
     yearly_data = {}
 
     # Loop through last 10 years (including current year)
-    for year in range(current_year - 5 + 1, current_year + 1):
+    for year in range(current_year - 20 + 1, current_year + 1):
         start = f"{year}-01-01"
         end = datetime.today().strftime('%Y-%m-%d') if year == current_year else f"{year}-12-31"
         
@@ -54,7 +54,7 @@ async def analysis(update:Update,context: ContextTypes.DEFAULT_TYPE):
     for year, df in yearly_data.items():
         plt.plot(df['Month'], df['Close'], marker='o', label=str(year))
 
-    plt.title(f"{ticker} - Monthly Close Price (Past 5 Years: {current_year-5} to {current_year})")
+    plt.title(f"{ticker} - Monthly Close Price (Past Years: From listing to {current_year})")
     plt.xlabel("Month")
     plt.ylabel("Price (INR)")
     plt.grid(True)
