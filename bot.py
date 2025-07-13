@@ -87,8 +87,9 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
         fig.delaxes(axes[i])
 
     plt.tight_layout()
-    plt.savefig(ticker+"_years_charts.png", dpi=300)
-    filename=ticker+"_years_charts.png"
+    filename = f"{ticker}_years_charts.png"
+    plt.savefig(filename, dpi=150, format='png')
+    logging.info("Saved image:", filename, "Size:", os.path.getsize(filename))
     with open(filename, 'rb') as f:
         await context.bot.send_photo(chat_id=update.effective_chat.id, photo=f)
     os.remove(filename)  # CleanUp
