@@ -9,6 +9,7 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
+import math
 logging.basicConfig(level=logging.INFO)
 task_queue = asyncio.Queue()
 
@@ -17,7 +18,91 @@ api_id = int(os.getenv("API_ID"))
 api_hash = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-async def analysis(update:Update,context: ContextTypes.DEFAULT_TYPE):
+async def download_monthly_data(ticker, start_year, end_year):
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    yearly_data = {}
+
+    for year in range(start_year, end_year + 1):
+        start = f"{year}-01-01"
+        end = datetime.today().strftime('%Y-%m-%d') if year == end_year else f"{year}-12-31"
+
+        df = await yf.download(ticker, start=start, end=end, interval='1mo', progress=False)
+        if df.empty:
+            continue
+
+        df['Month'] = df.index.strftime('%b')
+        df['Month'] = pd.Categorical(df['Month'], categories=months, ordered=True)
+        df.sort_values('Month', inplace=True)
+
+        yearly_data[year] = df[['Month', 'Close']]
+
+    return yearly_data
+
+
+async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextTypes.DEFAULT_TYPE):
+    num_years = len(yearly_data)
+    cols = 3
+    rows = math.ceil(num_years / cols)
+    fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 4 * rows))
+    axes = axes.flatten()
+
+    for idx, (year, df) in enumerate(yearly_data.items()):
+        ax = axes[idx]
+        ax.plot(df['Month'], df['Close'], marker='o', label=str(year))
+
+        min_idx = df['Close'].idxmin()
+        max_idx = df['Close'].idxmax()
+        min_monthw = df.loc[min_idx, 'Month']
+        max_monthw = df.loc[max_idx, 'Month']
+        if isinstance(min_monthw, pd.Series):
+            min_monthw = min_monthw.values[0]
+        if isinstance(max_monthw, pd.Series):
+            max_monthw = max_monthw.values[0]
+
+        min_price = df.loc[min_idx, 'Close'].squeeze()
+        max_price = df.loc[max_idx, 'Close'].squeeze()
+
+        percent_change = ((max_price - min_price) / min_price) * 100
+
+        print(f"{year}: {min_monthw}-{max_monthw} | % Change: {percent_change:.2f}%")
+
+        min_month = df.loc[min_idx, 'Month'].item()
+        max_month = df.loc[max_idx, 'Month'].item()
+
+        ax.axvline(x=min_month, linestyle='solid', color='red', alpha=0.3)
+        ax.axvline(x=max_month, linestyle='solid', color='green', alpha=0.3)
+
+        # ⬇️ Add percent change as text box
+        ax.text(0.05, 0.95, f"% Change:\n{percent_change:.2f}%", transform=ax.transAxes,
+                fontsize=10, verticalalignment='top',
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.5))
+
+        ax.set_title(f"{ticker} - {year}")
+        ax.set_xlabel("Month")
+        ax.set_ylabel("Price (INR)")
+        ax.grid(True)
+
+    for i in range(len(yearly_data), len(axes)):
+        fig.delaxes(axes[i])
+
+    plt.tight_layout()
+    plt.savefig(ticker+"_years_charts.png", dpi=300)
+    filename=ticker+"_years_charts.png"
+    with open(filename, 'rb') as f:
+        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=f)
+    os.remove(filename)  # CleanUp
+
+
+async def analysis(update:Update,context:ContextTypes.DEFAULT_TYPE):
+    ticker = context.args[0]+".NS"
+    current_year = datetime.today().year
+    start_year = 1995
+
+    yearly_data = await download_monthly_data(ticker, start_year, current_year)
+    await plot_yearly_grid(yearly_data, ticker,update,context)
+
+async def analysi(update:Update,context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id 
     link= context.args[0]
     ticker = link+".NS"
@@ -66,7 +151,7 @@ async def analysis(update:Update,context: ContextTypes.DEFAULT_TYPE):
     filename="monthly_comparison_last_10_years.png"
     with open(filename, 'rb') as f:
         await context.bot.send_photo(chat_id=update.effective_chat.id, photo=f)
-    os.remove(filename)  # Clean up=
+    os.remove(filename)  # CleanUp
     
 
 # Command: /start
@@ -77,15 +162,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         client = TelegramClient(StringSession(), api_id, api_hash)
         await client.connect()
 
-        await update.message.reply_text(text=f"🙌Welcome to the TeleSecretDownloader Bot!\n"
-                                        f"Here after login you can dowload files from PRIVATE Channel or Groups which does'nt allow downloading.🚀\n"
+        await update.message.reply_text(text=f"🙌Welcome to the TeleSecretAnalysis Bot!\n"
+                                        f"Here you can analyze any listed indian stock.🚀\n"
                                         f"📢Devs Group:@\n\n"
                                         f"💼Account: `{user_id}`\n"
-                                        f"Type /payment to buy🎟(1🎟=1Photo🖼 or Video🎞 or File📁)\n"
-                                        f"✈Type /invite to earn 🎟 by inviting friends.\n\n"
+                                        f"Type /analyze <Stock Name>\n"
                                         f"🆘Use /help to see all available commands.\n\n"
-                                        f"‼Privacy guranteed: We don't share your session or file your download.\n"
-                                        f"🔗Referral Link: `https//t.me/{context.bot.username}?start={user_id}`",
+                                        f"🔗Invite Link: `https//t.me/{context.bot.username}?start={user_id}`",
                                         parse_mode="Markdown")
     except Exception as e:
         await update.message.reply_text(f"Session error: {e}")
@@ -93,35 +176,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-async def post(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chat_id = update.effective_chat.id
 
         client = TelegramClient(StringSession(), api_id, api_hash)
         await client.connect()
         await analysis(update,context)
-        await context.bot.send_message(chat_id=chat_id,text=f"⚠️ Error: {link}")
-        
-        """ #await update.message.reply_text(f"🔍 Searching in `{channel_id}`... Please wait.", parse_mode="Markdown")
-        await update.message.reply_text(f"🔍 Searching... Please wait.", parse_mode="Markdown")
-
-        peer = PeerChannel(channel_id)
-        message = await client.get_messages(peer, ids=message_id)
-        #await update.message.reply_text(str(message))
-
-        await update.message.reply_text(f"🖼️ Photo Media Found")
-        # Add download button
-        button = InlineKeyboardMarkup([[InlineKeyboardButton("⬇️ Download", callback_data=f"download:{channel_id}:{message_id}:{False}")]])
-        await update.message.reply_text("Click below to download this photo:", reply_markup=button)
-        #await update.message.reply_text(f"- Message ID: {message.id}") """
+        await context.bot.send_message(chat_id=chat_id,text=f"Analysis Done.")
 
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
         await client.disconnect()
-
-
-
-
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Nsadsdddsasadsadad")
@@ -141,11 +207,7 @@ async def setup(application):
     await application.bot.set_my_commands([
         BotCommand("start", "Start the bot"),
         BotCommand("help", "Get help"),
-        BotCommand("profile", "View your profile"),
-        BotCommand("post", "<File Link> \nDownload one post"),
-        BotCommand("invite", "Invite and earn"),
-        BotCommand("dailyclaim", "Claim today's claim"),
-        BotCommand("logout", "Delete Session")
+        BotCommand("analyze", "<Stock Name> \nGet charts")
     ])
     # Set menu button to show commands
     await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
@@ -156,8 +218,7 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help))
-    """ app.add_handler(CommandHandler("profile", profile))  """
-    app.add_handler(CommandHandler("post", post)) 
+    app.add_handler(CommandHandler("analyze", analyze)) 
     app.add_handler(CallbackQueryHandler(handle_callback))
 
     app.post_init = setup
