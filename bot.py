@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
 import math
+from PIL import Image
 logging.basicConfig(level=logging.INFO)
 task_queue = asyncio.Queue()
 
@@ -46,6 +47,7 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
     rows = math.ceil(num_years / cols)
     fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 4 * rows))
     axes = axes.flatten()
+    msg=""
 
     for idx, (year, df) in enumerate(yearly_data.items()):
         ax = axes[idx]
@@ -65,7 +67,7 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
 
         percent_change = ((max_price - min_price) / min_price) * 100
 
-        await context.bot.send_message(chat_id=update.effective_chat.id,text=f"{year}: {min_monthw}-{max_monthw} | % Change: {percent_change:.2f}%")
+        msg+=f"{year}: {min_monthw}-{max_monthw} | % Change: {percent_change:.2f}%"
 
         min_month = df.loc[min_idx, 'Month'].item()
         max_month = df.loc[max_idx, 'Month'].item()
@@ -90,8 +92,13 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
     filename = f"{ticker}_years_charts.png"
     plt.savefig(filename, dpi=300, format='png')
     logging.info("Saved image:", filename, "Size:", os.path.getsize(filename))
+    max_dim = 1280
+    with Image.open(filename) as img:
+        img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+        img.save(filename)  # Overwrite with resized image
     with open(filename, 'rb') as f:
         await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
+    await context.bot.send_message(chat_id=update.effective_chat.id,text=msg)
     os.remove(filename)  # CleanUp
 
 
