@@ -67,7 +67,7 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
 
         percent_change = ((max_price - min_price) / min_price) * 100
 
-        msg+=f"{year}: {min_monthw}-{max_monthw} | % Change: {percent_change:.2f}%"
+        msg+=f"{year}: {min_monthw}-{max_monthw} | % Change: {percent_change:.2f}%\n"
 
         min_month = df.loc[min_idx, 'Month'].item()
         max_month = df.loc[max_idx, 'Month'].item()
@@ -91,15 +91,24 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
     plt.tight_layout()
     filename = f"{ticker}_years_charts.png"
     plt.savefig(filename, dpi=300, format='png')
-    logging.info("Saved image:", filename, "Size:", os.path.getsize(filename))
-    """ max_dim = 1280
+    logging.info(f"Saved image: {filename}, Size: {os.path.getsize(filename)} bytes")
+
+    # Resize for Telegram limit
+    max_dim = 1280
     with Image.open(filename) as img:
         img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
-        img.save(filename)  # Overwrite with resized image """
+        img.save(filename)
+
+    # Send as media group
     with open(filename, 'rb') as f:
-        await context.bot.send_media_group(chat_id=update.effective_chat.id, media=f)
-    await context.bot.send_message(chat_id=update.effective_chat.id,text=msg)
-    os.remove(filename)  # CleanUp
+        media = [InputMediaPhoto(media=f)]
+        await context.bot.send_media_group(chat_id=update.effective_chat.id, media=media)
+
+    # Optional message
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+
+    # Clean up
+    os.remove(filename)
 
 
 async def analysis(update:Update,context:ContextTypes.DEFAULT_TYPE):
