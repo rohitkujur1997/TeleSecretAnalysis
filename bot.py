@@ -1,7 +1,7 @@
 import os, asyncio
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
-from telegram import Update, BotCommand, MenuButtonCommands, InputMediaPhoto
+from telegram import Update, BotCommand, MenuButtonCommands
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
 from datetime import datetime
 import logging
@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
 import math
-from PIL import Image
 logging.basicConfig(level=logging.INFO)
 task_queue = asyncio.Queue()
 
@@ -95,8 +94,7 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
 
     # Send as media group
     with open(filename, 'rb') as f:
-        media = [InputMediaPhoto(media=f)]
-        await context.bot.send_media_group(chat_id=update.effective_chat.id, media=media)
+        await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
 
     # Optional message
     await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
