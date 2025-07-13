@@ -1,7 +1,7 @@
 import os, asyncio
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
-from telegram import Update, BotCommand, MenuButtonCommands
+from telegram import Update, BotCommand, MenuButtonCommands, InputMediaPhoto
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
 from datetime import datetime
 import logging
