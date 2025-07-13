@@ -88,7 +88,7 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
 
     plt.tight_layout()
     filename = f"{ticker}_years_charts.png"
-    plt.savefig(filename, dpi=150, format='png')
+    plt.savefig(filename, dpi=300, format='png')
     logging.info("Saved image:", filename, "Size:", os.path.getsize(filename))
     with open(filename, 'rb') as f:
         await context.bot.send_photo(chat_id=update.effective_chat.id, photo=f)
