@@ -65,7 +65,7 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
 
         percent_change = ((max_price - min_price) / min_price) * 100
 
-        print(f"{year}: {min_monthw}-{max_monthw} | % Change: {percent_change:.2f}%")
+        await context.bot.send_message(chat_id=update.effective_chat.id,text=f"{year}: {min_monthw}-{max_monthw} | % Change: {percent_change:.2f}%")
 
         min_month = df.loc[min_idx, 'Month'].item()
         max_month = df.loc[max_idx, 'Month'].item()
@@ -91,7 +91,7 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
     plt.savefig(filename, dpi=300, format='png')
     logging.info("Saved image:", filename, "Size:", os.path.getsize(filename))
     with open(filename, 'rb') as f:
-        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=f)
+        await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
     os.remove(filename)  # CleanUp
 
 
