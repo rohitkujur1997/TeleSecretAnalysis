@@ -93,12 +93,6 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
     plt.savefig(filename, dpi=300, format='png')
     logging.info(f"Saved image: {filename}, Size: {os.path.getsize(filename)} bytes")
 
-    # Resize for Telegram limit
-    max_dim = 1280
-    with Image.open(filename) as img:
-        img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
-        img.save(filename)
-
     # Send as media group
     with open(filename, 'rb') as f:
         media = [InputMediaPhoto(media=f)]
