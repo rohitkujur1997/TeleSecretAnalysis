@@ -18,7 +18,7 @@ api_id = int(os.getenv("API_ID"))
 api_hash = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-async def download_monthly_data(ticker, start_year, end_year):
+def download_monthly_data(ticker, start_year, end_year):
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     yearly_data = {}
@@ -27,7 +27,7 @@ async def download_monthly_data(ticker, start_year, end_year):
         start = f"{year}-01-01"
         end = datetime.today().strftime('%Y-%m-%d') if year == end_year else f"{year}-12-31"
 
-        df = await yf.download(ticker, start=start, end=end, interval='1mo', progress=False)
+        df = yf.download(ticker, start=start, end=end, interval='1mo', progress=False)
         if df.empty:
             continue
 
