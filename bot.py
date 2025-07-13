@@ -92,12 +92,12 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
     filename = f"{ticker}_years_charts.png"
     plt.savefig(filename, dpi=300, format='png')
     logging.info("Saved image:", filename, "Size:", os.path.getsize(filename))
-    max_dim = 1280
+    """ max_dim = 1280
     with Image.open(filename) as img:
         img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
-        img.save(filename)  # Overwrite with resized image
+        img.save(filename)  # Overwrite with resized image """
     with open(filename, 'rb') as f:
-        await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
+        await context.bot.send_media_group(chat_id=update.effective_chat.id, media=f)
     await context.bot.send_message(chat_id=update.effective_chat.id,text=msg)
     os.remove(filename)  # CleanUp
 
