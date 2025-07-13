@@ -99,7 +99,7 @@ async def analysis(update:Update,context:ContextTypes.DEFAULT_TYPE):
     current_year = datetime.today().year
     start_year = 1995
 
-    yearly_data = await download_monthly_data(ticker, start_year, current_year)
+    yearly_data = download_monthly_data(ticker, start_year, current_year)
     await plot_yearly_grid(yearly_data, ticker,update,context)
 
 async def analysi(update:Update,context: ContextTypes.DEFAULT_TYPE):
