@@ -129,7 +129,7 @@ async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
                 values.append(row[0])
 
     #await context.bot.send_message(chat_id=update.effective_chat.id,text=values)
-    ticker_symbols = values
+    ticker_symbols = [item + ".NS" for item in values]
     start_day, start_month = 10, 5
     end_day, end_month = 30, 6
     years_back = 10
@@ -141,7 +141,6 @@ async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
 
     for ticker_symbol in ticker_symbols:
         try:
-            ticker_symbol+=".NS"
             ticker = yf.Ticker(ticker_symbol)
             df = ticker.history(start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'), interval="1d")
             df.index = pd.to_datetime(df.index).tz_localize(None)
@@ -172,7 +171,6 @@ async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
     # Merge all results into a single DataFrame
     combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
     for symbol in ticker_symbols:
-        symbol+=".NS"
         df_temp = all_results[symbol]
         combined_df[symbol] = df_temp['% Change'].values
     
