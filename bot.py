@@ -168,13 +168,13 @@ async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}")
             continue
 
-    # Merge all results into a single DataFrame
+    """ # Merge all results into a single DataFrame
     combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
     for symbol in ticker_symbols:
         df_temp = all_results[symbol]
         combined_df[symbol] = df_temp['% Change'].values
     
-    await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False))
+    await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False)) """
 
     # Plot grouped bar chart
     # Define grid size dynamically
