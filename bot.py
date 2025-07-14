@@ -129,7 +129,7 @@ async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
                 values.append(row[0])
 
     #await context.bot.send_message(chat_id=update.effective_chat.id,text=values)
-    ticker_symbols = values
+    ticker_symbols = ["INFY.NS",'TIIL.NS', 'KRBL.NS', 'ELECTCAST.NS', 'BERGEPAINT.NS', 'SARDAEN.NS', 'EMBDL.NS', 'SURYAROSNI.NS', 'RTNINDIA.NS']#values
     start_day, start_month = 10, 5
     end_day, end_month = 30, 6
     years_back = 10
