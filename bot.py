@@ -216,8 +216,8 @@ async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
     # Final layout adjustments
     fig.suptitle(f"% Change from {start_day}/{start_month} to {end_day}/{end_month} (Last {years_back} Years)", fontsize=14)
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.savefig(update.effective_chat.id+"suggestion.png", dpi=300)
-    suggestionimg=update.effective_chat.id+"suggestion.png"
+    plt.savefig(str(update.effective_chat.id)+"suggestion.png", dpi=300)
+    suggestionimg=str(update.effective_chat.id)+"suggestion.png"
     logging.info(f"Saved image: {suggestionimg}, Size: {os.path.getsize(suggestionimg)} bytes")
 
     # Send as media group
