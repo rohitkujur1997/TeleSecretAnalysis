@@ -9,7 +9,7 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
-import math
+import math, csv
 logging.basicConfig(level=logging.INFO)
 task_queue = asyncio.Queue()
 
@@ -111,57 +111,19 @@ async def analysis(update:Update,context:ContextTypes.DEFAULT_TYPE):
     yearly_data = download_monthly_data(ticker, start_year, current_year)
     await plot_yearly_grid(yearly_data, ticker,update,context)
 
-async def analysi(update:Update,context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id 
-    link= context.args[0]
-    ticker = link+".NS"
-    current_year = datetime.today().year
+async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
+    values = []
 
-    # Month order for x-axis
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    # Open the CSV file
+    with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)  # Skip header (row 1)
 
-    # Dictionary to hold year-wise data
-    yearly_data = {}
+        for row in reader:
+            if len(row) > 0 and row[0]:  # Check if column A has value
+                values.append(row[0])
 
-    # Loop through last 10 years (including current year)
-    for year in range(current_year - 20 + 1, current_year + 1):
-        start = f"{year}-01-01"
-        end = datetime.today().strftime('%Y-%m-%d') if year == current_year else f"{year}-12-31"
-        
-        # Download monthly data
-        df = yf.download(ticker, start=start, end=end, interval='1mo', progress=False)
-        if df.empty:
-            continue  # Skip if no data
-        
-        # Add Month column and align order
-        df['Month'] = df.index.strftime('%b')
-        df['Month'] = pd.Categorical(df['Month'], categories=months, ordered=True)
-        df.sort_values('Month', inplace=True)
-        
-        # Store close prices with month index
-        yearly_data[year] = df[['Month', 'Close']]
-
-    # Plotting
-    plt.figure(figsize=(14, 7))
-
-    for year, df in yearly_data.items():
-        plt.plot(df['Month'], df['Close'], marker='o', label=str(year))
-
-    plt.title(f"{ticker} - Monthly Close Price (Past Years: From listing to {current_year})")
-    plt.xlabel("Month")
-    plt.ylabel("Price (INR)")
-    plt.grid(True)
-    plt.legend(title="Year", loc='upper left', bbox_to_anchor=(1, 1))
-    plt.tight_layout()
-
-    # Save chart image
-    plt.savefig("monthly_comparison_last_10_years.png")
-    filename="monthly_comparison_last_10_years.png"
-    with open(filename, 'rb') as f:
-        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=f)
-    os.remove(filename)  # CleanUp
-    
+    await context.bot.send_message(chat_id=update.effective_chat.id,text=values)
 
 # Command: /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -176,6 +138,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                         f"📢Devs Group:@\n\n"
                                         f"💼Account: `{user_id}`\n"
                                         f"Type /analyze <Stock Name>\n"
+                                        f"Type /suggest\n"
                                         f"🆘Use /help to see all available commands.\n\n"
                                         f"🔗Invite Link: `https//t.me/{context.bot.username}?start={user_id}`",
                                         parse_mode="Markdown")
@@ -184,6 +147,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await client.disconnect()
         return
 
+async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        chat_id = update.effective_chat.id
+
+        client = TelegramClient(StringSession(), api_id, api_hash)
+        await client.connect()
+        await suggestion(update,context)
+        await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.")
+
+    except Exception as e:
+        await update.message.reply_text(f"⚠️ Error: {e}")
+        await client.disconnect()
 
 async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -216,7 +191,8 @@ async def setup(application):
     await application.bot.set_my_commands([
         BotCommand("start", "Start the bot"),
         BotCommand("help", "Get help"),
-        BotCommand("analyze", "<Stock Name> \nGet charts")
+        BotCommand("analyze", "<Stock Name> \nGet charts"),
+        BotCommand("suggest", "Get charts")
     ])
     # Set menu button to show commands
     await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
@@ -228,6 +204,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help))
     app.add_handler(CommandHandler("analyze", analyze)) 
+    app.add_handler(CommandHandler("suggest", suggest)) 
     app.add_handler(CallbackQueryHandler(handle_callback))
 
     app.post_init = setup
