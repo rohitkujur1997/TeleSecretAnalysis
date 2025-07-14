@@ -172,6 +172,7 @@ async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
     # Merge all results into a single DataFrame
     combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
     for symbol in ticker_symbols:
+        symbol+=".NS"
         df_temp = all_results[symbol]
         combined_df[symbol] = df_temp['% Change'].values
     
