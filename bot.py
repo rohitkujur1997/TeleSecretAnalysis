@@ -129,7 +129,7 @@ async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
                 values.append(row[0])
 
     #await context.bot.send_message(chat_id=update.effective_chat.id,text=values)
-    ticker_symbols = ["INFY.NS",'TIIL.NS', 'KRBL.NS', 'ELECTCAST.NS', 'BERGEPAINT.NS', 'SARDAEN.NS', 'EMBDL.NS', 'SURYAROSNI.NS', 'RTNINDIA.NS']#values
+    ticker_symbols = values
     start_day, start_month = 10, 5
     end_day, end_month = 30, 6
     years_back = 10
@@ -140,29 +140,34 @@ async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
     all_results = {}
 
     for ticker_symbol in ticker_symbols:
-        ticker = yf.Ticker(ticker_symbol)
-        df = ticker.history(start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'), interval="1d")
-        df.index = pd.to_datetime(df.index).tz_localize(None)
-        df = df[['Close']]
+        try:
+            ticker_symbol+=".NS"
+            ticker = yf.Ticker(ticker_symbol)
+            df = ticker.history(start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'), interval="1d")
+            df.index = pd.to_datetime(df.index).tz_localize(None)
+            df = df[['Close']]
 
-        results = []
-        for year in range(end_date.year - 1, end_date.year - years_back - 1, -1):
-            try:
-                d1 = datetime(year, start_month, start_day)
-                d2 = datetime(year, end_month, end_day)
-                close1 = get_nearest_close(d1, df)
-                close2 = get_nearest_close(d2, df)
-                if close1 and close2:
-                    pct = ((close2 - close1) / close1) * 100
-                    results.append({
-                        "Year": year,
-                        "% Change": round(pct, 2)
-                    })
-            except Exception as e:
-                await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}")
-                continue
+            results = []
+            for year in range(end_date.year - 1, end_date.year - years_back - 1, -1):
+                try:
+                    d1 = datetime(year, start_month, start_day)
+                    d2 = datetime(year, end_month, end_day)
+                    close1 = get_nearest_close(d1, df)
+                    close2 = get_nearest_close(d2, df)
+                    if close1 and close2:
+                        pct = ((close2 - close1) / close1) * 100
+                        results.append({
+                            "Year": year,
+                            "% Change": round(pct, 2)
+                        })
+                except Exception as e:
+                    await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}")
+                    continue
 
-        all_results[ticker_symbol] = pd.DataFrame(results).sort_values('Year')
+            all_results[ticker_symbol] = pd.DataFrame(results).sort_values('Year')
+        except Exception as e:
+            await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}")
+            continue
 
     # Merge all results into a single DataFrame
     combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
