@@ -8,7 +8,7 @@ import logging
 import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import math, csv
 logging.basicConfig(level=logging.INFO)
 task_queue = asyncio.Queue()
@@ -111,6 +111,11 @@ async def analysis(update:Update,context:ContextTypes.DEFAULT_TYPE):
     yearly_data = download_monthly_data(ticker, start_year, current_year)
     await plot_yearly_grid(yearly_data, ticker,update,context)
 
+def get_nearest_close(date, df):
+    while date not in df.index and date >= df.index.min():
+        date -= timedelta(days=1)
+    return df.loc[date]['Close'] if date in df.index else None
+
 async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
     values = []
 
@@ -123,7 +128,101 @@ async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
             if len(row) > 0 and row[0]:  # Check if column A has value
                 values.append(row[0])
 
-    await context.bot.send_message(chat_id=update.effective_chat.id,text=values)
+    #await context.bot.send_message(chat_id=update.effective_chat.id,text=values)
+    ticker_symbols = values
+    start_day, start_month = 10, 5
+    end_day, end_month = 30, 6
+    years_back = 10
+
+    end_date = datetime.today()
+    start_date = end_date.replace(year=end_date.year - years_back)
+    # Store all results for plotting
+    all_results = {}
+
+    for ticker_symbol in ticker_symbols:
+        ticker = yf.Ticker(ticker_symbol)
+        df = ticker.history(start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'), interval="1d")
+        df.index = pd.to_datetime(df.index).tz_localize(None)
+        df = df[['Close']]
+
+        results = []
+        for year in range(end_date.year - 1, end_date.year - years_back - 1, -1):
+            try:
+                d1 = datetime(year, start_month, start_day)
+                d2 = datetime(year, end_month, end_day)
+                close1 = get_nearest_close(d1, df)
+                close2 = get_nearest_close(d2, df)
+                if close1 and close2:
+                    pct = ((close2 - close1) / close1) * 100
+                    results.append({
+                        "Year": year,
+                        "% Change": round(pct, 2)
+                    })
+            except Exception as e:
+                await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}")
+                continue
+
+        all_results[ticker_symbol] = pd.DataFrame(results).sort_values('Year')
+
+    # Merge all results into a single DataFrame
+    combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
+    for symbol in ticker_symbols:
+        df_temp = all_results[symbol]
+        combined_df[symbol] = df_temp['% Change'].values
+    
+    await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False))
+
+    # Plot grouped bar chart
+    # Define grid size dynamically
+    num_tickers = len(ticker_symbols)
+    cols = 2  # You can increase for wider layouts
+    rows = math.ceil(num_tickers / cols)
+
+    # Create subplots grid
+    fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 4 * rows))
+    axes = axes.flatten()  # Flatten for easy indexing
+
+    # Plot each ticker in its subplot
+    for i, symbol in enumerate(ticker_symbols):
+        ax = axes[i]
+        df_temp = all_results[symbol]
+        years = df_temp['Year'].astype(str)
+        changes = df_temp['% Change']
+        colors = ['green' if val > 0 else 'red' for val in changes]
+
+        bars = ax.bar(years, changes, color=colors)
+        
+        # Annotate bars
+        for bar, value in zip(bars, changes):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width() / 2, height,
+                    f"{value:.2f}%", ha='center', va='bottom' if height > 0 else 'top', fontsize=8)
+
+        ax.axhline(0, color='black', linestyle='--', linewidth=0.8)
+        ax.set_title(symbol)
+        ax.set_xlabel("Year")
+        ax.grid(axis='y', linestyle='--', alpha=0.5)
+        if i % cols == 0:
+            ax.set_ylabel("% Change")
+
+    # Remove unused axes (if any)
+    for j in range(i + 1, len(axes)):
+        fig.delaxes(axes[j])
+
+    # Final layout adjustments
+    fig.suptitle(f"% Change from {start_day}/{start_month} to {end_day}/{end_month} (Last {years_back} Years)", fontsize=14)
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.savefig(update.effective_chat.id+"suggestion.png", dpi=300)
+    suggestionimg=update.effective_chat.id+"suggestion.png"
+    logging.info(f"Saved image: {suggestionimg}, Size: {os.path.getsize(suggestionimg)} bytes")
+
+    # Send as media group
+    with open(suggestionimg, 'rb') as f:
+        await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
+    #plt.show()
+    
+    # Clean up
+    os.remove(suggestionimg)
 
 # Command: /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -185,6 +284,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     """ if query.data == "dailyclaim":
         await dailyclaim(update,context) """
+
+async def send_long_message(client, entity, message, chunk_size=4096):
+    for i in range(0, len(message), chunk_size):
+        await client.send_message(entity, message[i:i+chunk_size])
 
 async def setup(application):
     # Set commands
