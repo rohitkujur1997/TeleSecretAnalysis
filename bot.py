@@ -284,7 +284,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             values = []
             data = db.collection("users").document(str(chat_id)).get().to_dict()
-            FNO = data.get("FNO", 0)
+            FNO = data.get("FNO", False)
             
             await context.bot.send_message(chat_id=chat_id,text=FNO)
             """ # Open the CSV file
