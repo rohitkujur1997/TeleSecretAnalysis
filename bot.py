@@ -338,7 +338,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def send_long_message(client, entity, message, chunk_size=4096):
     for i in range(0, len(message), chunk_size):
-        await client.send_message(entity, message[i:i+chunk_size])
+        await client.bot.send_message(chat_id=entity, text=message[i:i+chunk_size])
 
 async def setup(application):
     # Set commands
