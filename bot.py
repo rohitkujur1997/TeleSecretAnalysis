@@ -277,13 +277,14 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         client = TelegramClient(StringSession(), api_id, api_hash)
         chat_id = update.effective_chat.id
+        user_id = update.effective_user.id
         await client.connect()
         if context.args and context.args[0]:
             ticker_symbols = [context.args[0]+".NS"]
             await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
         else:
             values = []
-            data = db.collection("users").document(str(chat_id)).get().to_dict()
+            data = db.collection("users").document(str(user_id)).get().to_dict()
             FNO = data.get("FNO", False)
             
             await context.bot.send_message(chat_id=chat_id,text=FNO)
