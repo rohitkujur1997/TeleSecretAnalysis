@@ -191,11 +191,11 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
         Avg = data.get("Average%", 0)
         # Merge all results into a single DataFrame
         combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
-        """ for symbol in ticker_symbols:
+        for symbol in ticker_symbols:
             df_temp = all_results[symbol]
             combined_df[symbol] = df_temp['% Change'].values
         
-        await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False)) """
+        """ await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False)) """
         # Calculate and print average percentage change for each stock
         avg_changes = combined_df.drop(columns=['Year']).mean()
         ticker_symbols = [symbol for symbol in ticker_symbols if avg_changes[symbol] >= Avg]
