@@ -480,7 +480,7 @@ def main():
     app.add_handler(CommandHandler("suggest", suggest)) 
     app.add_handler(CommandHandler("showsettings", showsettings)) 
     app.add_handler(CommandHandler("setsettings", setsettings)) 
-    app.add_handler(CommandHandler("membership", membership)) 
+    app.add_handler(CommandHandler("membership", membership)) #/membership <user_id>
     app.add_handler(CallbackQueryHandler(handle_callback))
 
     app.post_init = setup
