@@ -45,7 +45,7 @@ def set_user_payment(user_id):
     db.collection("TeleSecretAnalysis").document(str(user_id)).set({
         "Membership": "Active",
         "FNO": True,
-        "Average%": 20,
+        "Average": 20,
         "start_date": today_str
     })
 
@@ -188,7 +188,7 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
     if len(ticker_symbols)>1:
         user_id = update.effective_user.id
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
-        Avg = data.get("Average%", 0)
+        Avg = data.get("Average", 0)
         """ # Merge all results into a single DataFrame
         combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
         for symbol in ticker_symbols:
@@ -274,7 +274,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         FNO = data.get("FNO", False)
         Membership = data.get("Membership", "")
-        Avg = data.get("Average%", 0)
+        Avg = data.get("Average", 0)
 
         await update.message.reply_text(text=f"🙌Welcome to the TeleSecretAnalysis Bot!\n"
                                         f"Here you can analyze any listed indian stock.🚀\n"
@@ -339,6 +339,42 @@ async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Nsadsdddsasadsadad")
 
+async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+    FNO = data.get("FNO", False)
+    Membership = data.get("Membership", "")
+    Avg = data.get("Average", 0)
+    await update.message.reply_text(f"Your Settings:\n\n"
+                                    f"FNO: {FNO}\n"
+                                    f"Average: {Avg}\n"
+                                    f"Membership: {Membership}")
+
+async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    set = context.args[0]
+    val = context.args[1]
+    user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
+    doc = user_ref.get()
+    if doc.exists:
+        if set.upper()=="FNO":
+            if val.upper()=="TRUE":
+                user_ref.update({"FNO": True})
+                await update.message.reply_text(f"FNO Updated")
+            elif val.upper()=="FALSE":
+                user_ref.update({"FNO": False})
+                await update.message.reply_text(f"FNO Updated")
+            else:
+                await update.message.reply_text(f"Invalid Input\n true/false")
+        elif set.upper()=="AVERAGE":
+            if val.isnumeric():
+                user_ref.update({"AVERAGE": int(val)})
+                await update.message.reply_text(f"Average Updated")
+            else:
+                await update.message.reply_text(f"Invalid Input\n Number not numeric")
+        else:
+            await update.message.reply_text(f"Invalid Input")
+
 
 
 # This function is triggered when button is clicked
@@ -359,7 +395,9 @@ async def setup(application):
         BotCommand("start", "Start the bot"),
         BotCommand("help", "Get help"),
         BotCommand("analyze", "<Stock Name> \nGet charts"),
-        BotCommand("suggest", "Get charts")
+        BotCommand("suggest", "Get charts"),
+        BotCommand("showsettings", "For viewing settings"),
+        BotCommand("setsettings", "For changing settings")
     ])
     # Set menu button to show commands
     await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
@@ -372,6 +410,8 @@ def main():
     app.add_handler(CommandHandler("help", help))
     app.add_handler(CommandHandler("analyze", analyze)) 
     app.add_handler(CommandHandler("suggest", suggest)) 
+    app.add_handler(CommandHandler("showsettings", showsettings)) 
+    app.add_handler(CommandHandler("setsettings", setsettings)) 
     app.add_handler(CallbackQueryHandler(handle_callback))
 
     app.post_init = setup
