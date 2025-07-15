@@ -242,7 +242,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
         client = TelegramClient(StringSession(), api_id, api_hash)
         chat_id = update.effective_chat.id
         await client.connect()
-        if context.args[0]:
+        if context.args and context.args[0]:
             ticker_symbols = [context.args[0]+".NS"]
             await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
         else:
