@@ -439,7 +439,6 @@ async def membership(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if doc.exists:        
             data = doc.to_dict()
             Membership = data.get("Membership", False)
-            Membership = Membership.lower()=='true' 
             user_ref.update({"Membership": not Membership})
         await update.message.reply_text(f"Membership status changed")
     except Exception as e:
