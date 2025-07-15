@@ -299,7 +299,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 next(reader)  # Skip header (row 1)
 
                 for row in reader:
-                    if len(row) >= 4 and row[3].strip().upper() == "TRUE":
+                    if len(row) >= 4 and row[3].strip().upper() == str(FNO).upper():
                         values.append(row[0])
             ticker_symbols = [item + ".NS" for item in values]                        
             await context.bot.send_message(chat_id=chat_id,text=len(ticker_symbols))
