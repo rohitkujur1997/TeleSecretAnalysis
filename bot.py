@@ -116,20 +116,7 @@ def get_nearest_close(date, df):
         date -= timedelta(days=1)
     return df.loc[date]['Close'] if date in df.index else None
 
-async def suggestion(update:Update,context:ContextTypes.DEFAULT_TYPE):
-    values = []
-
-    # Open the CSV file
-    with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)  # Skip header (row 1)
-
-        for row in reader:
-            if len(row) > 0 and row[0]:  # Check if column A has value
-                values.append(row[0])
-
-    #await context.bot.send_message(chat_id=update.effective_chat.id,text=values)
-    ticker_symbols = [item + ".NS" for item in values]
+async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_TYPE):
     start_day, start_month = 10, 5
     end_day, end_month = 30, 6
     years_back = 10
@@ -253,11 +240,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chat_id = update.effective_chat.id
+        if context.args[0]:
+            ticker_symbols = [context.args[0]+".NS"]
+            await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
+        else:
+            await context.bot.send_message(chat_id=chat_id,text="not ticker")
 
-        client = TelegramClient(StringSession(), api_id, api_hash)
+
+        """ client = TelegramClient(StringSession(), api_id, api_hash)
         await client.connect()
-        await suggestion(update,context)
-        await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.")
+        values = []
+
+        # Open the CSV file
+        with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            next(reader)  # Skip header (row 1)
+
+            for row in reader:
+                if len(row) > 0 and row[0]:  # Check if column A has value
+                    values.append(row[0])
+        ticker_symbols = [item + ".NS" for item in values]
+        await suggestion(ticker_symbols,update,context)
+        await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.") """
 
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
