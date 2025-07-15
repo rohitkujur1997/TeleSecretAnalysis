@@ -1,4 +1,4 @@
-import os, asyncio
+import os, asyncio, pytz
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
 from telegram import Update, BotCommand, MenuButtonCommands
@@ -9,7 +9,9 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime, timedelta
-import math, csv
+import math, csv, json
+import firebase_admin
+from firebase_admin import credentials, firestore
 logging.basicConfig(level=logging.INFO)
 task_queue = asyncio.Queue()
 
@@ -17,6 +19,35 @@ task_queue = asyncio.Queue()
 api_id = int(os.getenv("API_ID"))
 api_hash = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+# Load credentials from environment variable
+firebase_json = os.getenv("FIREBASE_CREDENTIALS")
+if not firebase_json:
+    raise ValueError("❌ FIREBASE_CREDENTIALS environment variable is not set or is empty.")
+cred_dict = json.loads(firebase_json)
+
+# Store Firebase app globally (so it initializes once)
+firebase_app = None
+db = None
+
+
+def init_firebase():
+    global firebase_app, db
+    if not firebase_admin._apps:
+        cred = credentials.Certificate(cred_dict)
+        firebase_app = firebase_admin.initialize_app(cred)
+        db = firestore.client()
+
+def set_user_payment(user_id):
+    #init_firebase()
+    now = datetime.now(pytz.UTC)
+    today_str = now.strftime("%Y-%m-%d")
+    db.collection("TeleSecretAnalysys").document(str(user_id)).set({
+        "Membership": "Active",
+        "FNO": True,
+        "Average%": 20,
+        "start_date": today_str
+    })
 
 def download_monthly_data(ticker, start_year, end_year):
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -222,6 +253,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id
         client = TelegramClient(StringSession(), api_id, api_hash)
         await client.connect()
+
+        init_firebase()
+        doc = db.collection("users").document(str(user_id)).get()
+        if not doc.exists:
+            set_user_payment(user_id)
 
         await update.message.reply_text(text=f"🙌Welcome to the TeleSecretAnalysis Bot!\n"
                                         f"Here you can analyze any listed indian stock.🚀\n"
