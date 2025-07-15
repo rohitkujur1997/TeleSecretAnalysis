@@ -283,7 +283,11 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
         else:
             values = []
-            # Open the CSV file
+            data = db.collection("users").document(str(chat_id)).get().to_dict()
+            FNO = data.get("FNO", 0)
+            
+            await context.bot.send_message(chat_id=chat_id,text=FNO)
+            """ # Open the CSV file
             with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 next(reader)  # Skip header (row 1)
@@ -293,7 +297,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         values.append(row[0])
             ticker_symbols = [item + ".NS" for item in values]
         await suggestion(ticker_symbols,update,context)
-        await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.")
+        await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.") """
 
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
