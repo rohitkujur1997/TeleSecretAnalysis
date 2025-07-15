@@ -185,14 +185,20 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
         except Exception as e:
             await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}")
             continue
-
-    """ # Merge all results into a single DataFrame
-    combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
-    for symbol in ticker_symbols:
-        df_temp = all_results[symbol]
-        combined_df[symbol] = df_temp['% Change'].values
-    
-    await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False)) """
+    if len(ticker_symbols)>1:
+        user_id = update.effective_user.id
+        data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+        Avg = data.get("Average%", 0)
+        # Merge all results into a single DataFrame
+        combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
+        """ for symbol in ticker_symbols:
+            df_temp = all_results[symbol]
+            combined_df[symbol] = df_temp['% Change'].values
+        
+        await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False)) """
+        # Calculate and print average percentage change for each stock
+        avg_changes = combined_df.drop(columns=['Year']).mean()
+        ticker_symbols = [symbol for symbol in ticker_symbols if avg_changes[symbol] >= Avg]
 
     # Plot grouped bar chart
     # Define grid size dynamically
@@ -286,7 +292,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await client.connect()
         if context.args and context.args[0]:
             ticker_symbols = [context.args[0]+".NS"]
-            await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
+            #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
         else:
             values = []
             init_firebase()
@@ -302,9 +308,9 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     if len(row) >= 4 and row[3].strip().upper() == str(FNO).upper():
                         values.append(row[0])
             ticker_symbols = [item + ".NS" for item in values]                        
-            await context.bot.send_message(chat_id=chat_id,text=len(ticker_symbols))
-        """ await suggestion(ticker_symbols,update,context)
-        await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.") """
+            #await context.bot.send_message(chat_id=chat_id,text=len(ticker_symbols))
+        await suggestion(ticker_symbols,update,context)
+        await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.")
 
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
