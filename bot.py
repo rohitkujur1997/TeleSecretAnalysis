@@ -43,7 +43,7 @@ def set_user_payment(user_id):
     now = datetime.now(pytz.UTC)
     today_str = now.strftime("%Y-%m-%d")
     db.collection("TeleSecretAnalysis").document(str(user_id)).set({
-        "Membership": "Active",
+        "Membership": False,
         "FNO": True,
         "Average": 20,
         "start_date": today_str
@@ -273,7 +273,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             set_user_payment(user_id)
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         FNO = data.get("FNO", False)
-        Membership = data.get("Membership", "")
+        Membership = data.get("Membership", False)
         Avg = data.get("Average", 0)
 
         await update.message.reply_text(text=f"🙌Welcome to the TeleSecretAnalysis Bot!\n"
@@ -297,27 +297,36 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id = update.effective_chat.id
         user_id = update.effective_user.id
         await client.connect()
-        if context.args and context.args[0]:
-            ticker_symbols = [context.args[0]+".NS"]
-            #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
+        user_id = update.effective_user.id
+        data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+        Membership = data.get("Membership", False)
+        if Membership:
+            client = TelegramClient(StringSession(), api_id, api_hash)
+            chat_id = update.effective_chat.id
+            user_id = update.effective_user.id
+            await client.connect()
+            if context.args and context.args[0]:
+                ticker_symbols = [context.args[0]+".NS"]
+                #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
+            else:
+                values = []
+                #data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+                FNO = data.get("FNO", False)
+
+                # Open the CSV file
+                with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
+                    reader = csv.reader(csvfile)
+                    next(reader)  # Skip header (row 1)
+
+                    for row in reader:
+                        if len(row) >= 4 and row[3].strip().upper() == str(FNO).upper():
+                            values.append(row[0])
+                ticker_symbols = [item + ".NS" for item in values]                        
+                await context.bot.send_message(chat_id=chat_id,text=f"Checking {len(ticker_symbols)} stocks according to your FNO settings.")
+            await suggestion(ticker_symbols,update,context)
+            await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.")
         else:
-            values = []
-            init_firebase()
-            data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
-            FNO = data.get("FNO", False)
-
-            # Open the CSV file
-            with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
-                reader = csv.reader(csvfile)
-                next(reader)  # Skip header (row 1)
-
-                for row in reader:
-                    if len(row) >= 4 and row[3].strip().upper() == str(FNO).upper():
-                        values.append(row[0])
-            ticker_symbols = [item + ".NS" for item in values]                        
-            await context.bot.send_message(chat_id=chat_id,text=f"Checking {len(ticker_symbols)} stocks according to your FNO settings.")
-        await suggestion(ticker_symbols,update,context)
-        await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.")
+            await context.bot.send_message(chat_id=chat_id,text=f"Membership is Inactive")
 
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
@@ -343,7 +352,7 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
     FNO = data.get("FNO", False)
-    Membership = data.get("Membership", "")
+    Membership = data.get("Membership", False)
     Avg = data.get("Average", 0)
     await update.message.reply_text(f"Your Settings:\n\n"
                                     f"FNO: {FNO}\n"
@@ -351,31 +360,42 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                     f"Membership: {Membership}")
 
 async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    set = context.args[0]
-    val = context.args[1]
+    if context.args:
+        user_id = update.effective_user.id
+        set = context.args[0]
+        val = context.args[1]
+        user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
+        doc = user_ref.get()
+        if doc.exists:
+            if set.upper()=="FNO":
+                if val.upper()=="TRUE":
+                    user_ref.update({"FNO": True})
+                    await update.message.reply_text(f"FNO Updated")
+                elif val.upper()=="FALSE":
+                    user_ref.update({"FNO": False})
+                    await update.message.reply_text(f"FNO Updated")
+                else:
+                    await update.message.reply_text(f"Invalid Input\n true/false")
+            elif set.upper()=="AVERAGE":
+                if val.isnumeric():
+                    user_ref.update({"Average": int(val)})
+                    await update.message.reply_text(f"Average Updated")
+                else:
+                    await update.message.reply_text(f"Invalid Input\n Number not numeric")
+            else:
+                await update.message.reply_text(f"Invalid Input")
+        else:
+            await update.message.reply_text(f"/setsettings <parameter> <value>\nExample\n/setsettings FNO false")
+
+async def membership(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = context.args[0]
     user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
     doc = user_ref.get()
-    if doc.exists:
-        if set.upper()=="FNO":
-            if val.upper()=="TRUE":
-                user_ref.update({"FNO": True})
-                await update.message.reply_text(f"FNO Updated")
-            elif val.upper()=="FALSE":
-                user_ref.update({"FNO": False})
-                await update.message.reply_text(f"FNO Updated")
-            else:
-                await update.message.reply_text(f"Invalid Input\n true/false")
-        elif set.upper()=="AVERAGE":
-            if val.isnumeric():
-                user_ref.update({"Average": int(val)})
-                await update.message.reply_text(f"Average Updated")
-            else:
-                await update.message.reply_text(f"Invalid Input\n Number not numeric")
-        else:
-            await update.message.reply_text(f"Invalid Input")
-
-
+    if doc.exists:        
+        data = doc.to_dict()
+        Membership = data.get("Membership", False)
+        user_ref.update({"FNO": not Membership})
+    await update.message.reply_text(f"Membership status changed")
 
 # This function is triggered when button is clicked
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -412,6 +432,7 @@ def main():
     app.add_handler(CommandHandler("suggest", suggest)) 
     app.add_handler(CommandHandler("showsettings", showsettings)) 
     app.add_handler(CommandHandler("setsettings", setsettings)) 
+    app.add_handler(CommandHandler("membership", membership)) 
     app.add_handler(CallbackQueryHandler(handle_callback))
 
     app.post_init = setup
