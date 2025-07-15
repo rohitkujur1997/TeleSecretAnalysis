@@ -246,24 +246,18 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ticker_symbols = [context.args[0]+".NS"]
             await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
         else:
-            await context.bot.send_message(chat_id=chat_id,text="not ticker")
+            values = []
+            # Open the CSV file
+            with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)  # Skip header (row 1)
 
-
-        """ client = TelegramClient(StringSession(), api_id, api_hash)
-        await client.connect()
-        values = []
-
-        # Open the CSV file
-        with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
-            reader = csv.reader(csvfile)
-            next(reader)  # Skip header (row 1)
-
-            for row in reader:
-                if len(row) > 0 and row[0]:  # Check if column A has value
-                    values.append(row[0])
-        ticker_symbols = [item + ".NS" for item in values]
+                for row in reader:
+                    if len(row) > 0 and row[0]:  # Check if column A has value
+                        values.append(row[0])
+            ticker_symbols = [item + ".NS" for item in values]
         await suggestion(ticker_symbols,update,context)
-        await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.") """
+        await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.")
 
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
