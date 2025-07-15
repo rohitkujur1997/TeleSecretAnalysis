@@ -42,7 +42,7 @@ def set_user_payment(user_id):
     #init_firebase()
     now = datetime.now(pytz.UTC)
     today_str = now.strftime("%Y-%m-%d")
-    db.collection("TeleSecretAnalysys").document(str(user_id)).set({
+    db.collection("TeleSecretAnalysis").document(str(user_id)).set({
         "Membership": "Active",
         "FNO": True,
         "Average%": 20,
