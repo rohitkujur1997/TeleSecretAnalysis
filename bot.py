@@ -255,10 +255,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await client.connect()
 
         init_firebase()
-        doc = db.collection("users").document(str(user_id)).get()
+        doc = db.collection("TeleSecretAnalysis").document(str(user_id)).get()
         if not doc.exists:
             set_user_payment(user_id)
-        data = db.collection("users").document(str(user_id)).get().to_dict()
+        data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         FNO = data.get("FNO", False)
         Membership = data.get("Membership", "")
         Avg = data.get("Average%", 0)
@@ -290,8 +290,8 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             values = []
             init_firebase()
-            data = db.collection("users").document(str(user_id)).get().to_dict()
-            FNO = data.get("Membership", "")
+            data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+            FNO = data.get("FNO", False)
             
             await context.bot.send_message(chat_id=chat_id,text=FNO)
             """ # Open the CSV file
