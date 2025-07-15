@@ -280,7 +280,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                         f"Here you can analyze any listed indian stock.🚀\n"
                                         f"📢Devs Group:@\n\n"
                                         f"💼Account: `{user_id}`\n"
-                                        f"FNO: {FNO},\nMembership: {Membership},\nAverage%: {Avg}\n\n"
+                                        f"FNO: {FNO},\nMembership: {Membership},\nAverage: {Avg}\n\n"
                                         f"Type /analyze <Stock Name>\n"
                                         f"Type /suggest\n"
                                         f"🆘Use /help to see all available commands.\n\n"
@@ -368,7 +368,7 @@ async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(f"Invalid Input\n true/false")
         elif set.upper()=="AVERAGE":
             if val.isnumeric():
-                user_ref.update({"AVERAGE": int(val)})
+                user_ref.update({"Average": int(val)})
                 await update.message.reply_text(f"Average Updated")
             else:
                 await update.message.reply_text(f"Invalid Input\n Number not numeric")
