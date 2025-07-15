@@ -258,11 +258,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         doc = db.collection("users").document(str(user_id)).get()
         if not doc.exists:
             set_user_payment(user_id)
+        data = db.collection("users").document(str(user_id)).get().to_dict()
+        FNO = data.get("FNO", False)
+        Membership = data.get("Membership", "")
+        Avg = data.get("Average%", 0)
 
         await update.message.reply_text(text=f"🙌Welcome to the TeleSecretAnalysis Bot!\n"
                                         f"Here you can analyze any listed indian stock.🚀\n"
                                         f"📢Devs Group:@\n\n"
                                         f"💼Account: `{user_id}`\n"
+                                        f"FNO:{FNO}, Membership:{Membership}, Average%:{Avg}"
                                         f"Type /analyze <Stock Name>\n"
                                         f"Type /suggest\n"
                                         f"🆘Use /help to see all available commands.\n\n"
