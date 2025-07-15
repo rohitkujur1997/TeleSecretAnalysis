@@ -267,7 +267,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                         f"Here you can analyze any listed indian stock.🚀\n"
                                         f"📢Devs Group:@\n\n"
                                         f"💼Account: `{user_id}`\n"
-                                        f"FNO:{FNO}, Membership:{Membership}, Average%:{Avg}"
+                                        f"FNO: {FNO},\nMembership: {Membership},\nAverage%: {Avg}\n\n"
                                         f"Type /analyze <Stock Name>\n"
                                         f"Type /suggest\n"
                                         f"🆘Use /help to see all available commands.\n\n"
@@ -292,9 +292,8 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             init_firebase()
             data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
             FNO = data.get("FNO", False)
-            
-            await context.bot.send_message(chat_id=chat_id,text=FNO)
-            """ # Open the CSV file
+
+            # Open the CSV file
             with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 next(reader)  # Skip header (row 1)
@@ -302,8 +301,9 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 for row in reader:
                     if len(row) > 0 and row[0]:  # Check if column A has value
                         values.append(row[0])
-            ticker_symbols = [item + ".NS" for item in values]
-        await suggestion(ticker_symbols,update,context)
+            ticker_symbols = [item + ".NS" for item in values]                        
+            await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
+        """ await suggestion(ticker_symbols,update,context)
         await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.") """
 
     except Exception as e:
