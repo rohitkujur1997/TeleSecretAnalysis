@@ -302,7 +302,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     if len(row) > 2 and row[0] and all(row[2:]):  # Check column A and all d[2:]
                         values.append(row[0])
             ticker_symbols = [item + ".NS" for item in values]                        
-            await send_long_message(context,update.effective_chat.id,ticker_symbols)#context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
+            await context.bot.send_message(chat_id=chat_id,text=len(ticker_symbols))
         """ await suggestion(ticker_symbols,update,context)
         await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.") """
 
