@@ -189,11 +189,18 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
         user_id = update.effective_user.id
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         Avg = data.get("Average%", 0)
-        # Merge all results into a single DataFrame
+        """ # Merge all results into a single DataFrame
         combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
         for symbol in ticker_symbols:
             df_temp = all_results[symbol]
-            combined_df[symbol] = df_temp['% Change'].values
+            combined_df[symbol] = df_temp['% Change'].values """
+        # Merge all results by 'Year'
+        combined_df = pd.DataFrame({'Year': list(range(end_date.year - years_back, end_date.year))})
+
+        for symbol in ticker_symbols:
+            if symbol in all_results:
+                df_temp = all_results[symbol]
+                combined_df = combined_df.merge(df_temp, on='Year', how='left').rename(columns={'% Change': symbol})
         
         """ await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False)) """
         # Calculate and print average percentage change for each stock
@@ -308,7 +315,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     if len(row) >= 4 and row[3].strip().upper() == str(FNO).upper():
                         values.append(row[0])
             ticker_symbols = [item + ".NS" for item in values]                        
-            #await context.bot.send_message(chat_id=chat_id,text=len(ticker_symbols))
+            await context.bot.send_message(chat_id=chat_id,text=f"Checking {len(ticker_symbols)} stocks according to your FNO settings.")
         await suggestion(ticker_symbols,update,context)
         await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.")
 
