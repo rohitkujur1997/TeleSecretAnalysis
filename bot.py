@@ -284,6 +284,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
         else:
             values = []
+            init_firebase()
             data = db.collection("users").document(str(user_id)).get().to_dict()
             FNO = data.get("FNO", False)
             
