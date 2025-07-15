@@ -286,7 +286,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             values = []
             init_firebase()
             data = db.collection("users").document(str(user_id)).get().to_dict()
-            FNO = data.get("FNO", False)
+            FNO = data.get("Membership", "")
             
             await context.bot.send_message(chat_id=chat_id,text=FNO)
             """ # Open the CSV file
