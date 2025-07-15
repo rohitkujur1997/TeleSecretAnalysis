@@ -46,7 +46,11 @@ def set_user_payment(user_id):
         "Membership": False,
         "FNO": True,
         "Average": 20,
-        "start_date": today_str
+        "start_date":10,
+        "start_month":5,
+        "end_date":30,
+        "end_month":6,
+        "bot_started": today_str
     })
 
 def download_monthly_data(ticker, start_year, end_year):
@@ -148,8 +152,10 @@ def get_nearest_close(date, df):
     return df.loc[date]['Close'] if date in df.index else None
 
 async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_TYPE):
-    start_day, start_month = 10, 5
-    end_day, end_month = 30, 6
+    user_id = update.effective_user.id
+    data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+    start_day, start_month = data.get("start_date", 0), data.get("start_month", 0)
+    end_day, end_month = data.get("end_date", 0), data.get("end_month", 0)
     years_back = 10
 
     end_date = datetime.today()
@@ -349,53 +355,95 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Nsadsdddsasadsadad")
 
 async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
-    FNO = data.get("FNO", False)
-    Membership = data.get("Membership", False)
-    Avg = data.get("Average", 0)
-    await update.message.reply_text(f"Your Settings:\n\n"
-                                    f"FNO: {FNO}\n"
-                                    f"Average: {Avg}\n"
-                                    f"Membership: {Membership}")
+    try:
+        user_id = update.effective_user.id
+        data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+        FNO = data.get("FNO", False)
+        Membership = data.get("Membership", False)
+        Avg = data.get("Average", 0)
+        sd = data.get("start_date", 0)
+        sm = data.get("start_month", 0)
+        ed = data.get("end_date", 0)
+        em = data.get("end_month", 0)
+        await update.message.reply_text(f"Your Settings:\n\n"
+                                        f"FNO: {FNO}\n"
+                                        f"Average: {Avg}\n"
+                                        f"StartDate: {sd}\n"
+                                        f"StartMonth: {sm}\n"
+                                        f"EndDate: {ed}\n"
+                                        f"EndMonth: {em}\n"
+                                        f"Membership: {Membership}")
+    except Exception as e:
+        await update.message.reply_text(f"⚠️ Error: {e}")
 
 async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if context.args:
-        user_id = update.effective_user.id
-        set = context.args[0]
-        val = context.args[1]
-        user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
-        doc = user_ref.get()
-        if doc.exists:
-            if set.upper()=="FNO":
-                if val.upper()=="TRUE":
-                    user_ref.update({"FNO": True})
-                    await update.message.reply_text(f"FNO Updated")
-                elif val.upper()=="FALSE":
-                    user_ref.update({"FNO": False})
-                    await update.message.reply_text(f"FNO Updated")
+    try:
+        if context.args:
+            user_id = update.effective_user.id
+            set = context.args[0]
+            val = context.args[1]
+            user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
+            doc = user_ref.get()
+            if doc.exists:
+                if set.upper()=="FNO":
+                    if val.upper()=="TRUE":
+                        user_ref.update({"FNO": True})
+                        await update.message.reply_text(f"FNO Updated")
+                    elif val.upper()=="FALSE":
+                        user_ref.update({"FNO": False})
+                        await update.message.reply_text(f"FNO Updated")
+                    else:
+                        await update.message.reply_text(f"Invalid Input\n true/false")
+                elif set.upper()=="AVERAGE":
+                    if val.isnumeric():
+                        user_ref.update({"Average": int(val)})
+                        await update.message.reply_text(f"Average Updated")
+                    else:
+                        await update.message.reply_text(f"Invalid Input\n Number not numeric")
+                elif set.upper()=="STARTDATE":
+                    if val.isnumeric():
+                        user_ref.update({"start_date": int(val)})
+                        await update.message.reply_text(f"STARTDATE Updated")
+                    else:
+                        await update.message.reply_text(f"Invalid Input\n Number not numeric")
+                elif set.upper()=="STARTMONTH":
+                    if val.isnumeric():
+                        user_ref.update({"start_month": int(val)})
+                        await update.message.reply_text(f"STARTMONTH Updated")
+                    else:
+                        await update.message.reply_text(f"Invalid Input\n Number not numeric")
+                elif set.upper()=="ENDDATE":
+                    if val.isnumeric():
+                        user_ref.update({"end_date": int(val)})
+                        await update.message.reply_text(f"ENDDATE Updated")
+                    else:
+                        await update.message.reply_text(f"Invalid Input\n Number not numeric")
+                elif set.upper()=="ENDMONTH":
+                    if val.isnumeric():
+                        user_ref.update({"end_month": int(val)})
+                        await update.message.reply_text(f"ENDMONTH Updated")
+                    else:
+                        await update.message.reply_text(f"Invalid Input\n Number not numeric")
                 else:
-                    await update.message.reply_text(f"Invalid Input\n true/false")
-            elif set.upper()=="AVERAGE":
-                if val.isnumeric():
-                    user_ref.update({"Average": int(val)})
-                    await update.message.reply_text(f"Average Updated")
-                else:
-                    await update.message.reply_text(f"Invalid Input\n Number not numeric")
+                    await update.message.reply_text(f"Invalid Input")
             else:
-                await update.message.reply_text(f"Invalid Input")
-        else:
-            await update.message.reply_text(f"/setsettings <parameter> <value>\nExample\n/setsettings FNO false")
+                await update.message.reply_text(f"/setsettings <parameter> <value>\nExample\n/setsettings FNO false")
+    except Exception as e:
+        await update.message.reply_text(f"⚠️ Error: {e}")
 
 async def membership(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = context.args[0]
-    user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
-    doc = user_ref.get()
-    if doc.exists:        
-        data = doc.to_dict()
-        Membership = data.get("Membership", False)
-        user_ref.update({"FNO": not Membership})
-    await update.message.reply_text(f"Membership status changed")
+    try:
+        user_id = context.args[0]
+        user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
+        doc = user_ref.get()
+        if doc.exists:        
+            data = doc.to_dict()
+            Membership = data.get("Membership", False)
+            Membership = Membership.lower()=='true' 
+            user_ref.update({"Membership": not Membership})
+        await update.message.reply_text(f"Membership status changed")
+    except Exception as e:
+            await update.message.reply_text(f"⚠️ Error: {e}")
 
 # This function is triggered when button is clicked
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
