@@ -327,7 +327,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.delete()  # Deletes the previous message with the button
         await query.answer()          # Acknowledge the callback to remove the loading state
 
-    user_id = update.effective_chat.id
+    user_id = update.effective_user.id
+    chat_id = update.effective_chat.id
 
     if query.data == "mainMenu":
         await mainMenu(update,context)
@@ -344,13 +345,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if doc.exists:
             current_value = doc.to_dict().get("FNO", False)
             user_ref.update({"FNO": not current_value})
-            await context.bot.send_message(chat_id=user_id,text=f"✅ FNO set to `{not current_value}`.", parse_mode="Markdown",
+            await context.bot.send_message(chat_id=chat_id,text=f"✅ FNO set to `{not current_value}`.", parse_mode="Markdown",
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                                             ]))
         else:
             set_user_payment(user_id)
-            await context.bot.send_message(chat_id=user_id,text="🔄 User profile created. Please try again.",
+            await context.bot.send_message(chat_id=chat_id,text="🔄 User profile created. Please try again.",
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                                             ]))
