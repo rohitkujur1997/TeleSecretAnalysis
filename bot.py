@@ -418,10 +418,6 @@ async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await client.disconnect()
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    if query:
-        await query.message.delete()  # Deletes the previous message with the button
-        await query.answer()          # Acknowledge the callback to remove the loading state
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text=f"Nsadsdddsasadsadad",
                                    reply_markup=InlineKeyboardMarkup([
