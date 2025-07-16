@@ -300,7 +300,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
             )
         me = await client.get_me()
-        await context.bot.send_message(chat_id=chat_id,text=+me.phone+"'s Menu.",
+        await context.bot.send_message(chat_id=chat_id,text=str(user_id)+"'s Menu.",
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                                             ]))
