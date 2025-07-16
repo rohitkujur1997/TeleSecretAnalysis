@@ -3,7 +3,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
 from telegram import Update, BotCommand, MenuButtonCommands
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler, MessageHandler, filters
 from datetime import datetime
 import logging
 import yfinance as yf
@@ -311,7 +311,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
 async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Menu. (`{update.effective_user.id}`)"
+                                   text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Menu. (`{update.effective_user.id}`)\n"
                                    f"📲 Choose an Option from Main Menu:",
                                    reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsettings')],
@@ -355,6 +355,39 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                                             ]))
+    else:
+        # Ask for value input in next message
+        context.user_data["pending_setting"] = query.data.replace("set_", "")
+        await context.bot.send_message(chat_id=chat_id,text=f"📝 Please send the value for *{context.user_data['pending_setting']}*:", parse_mode="Markdown")
+            
+async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if "pending_setting" not in context.user_data:
+        return
+
+    setting = context.user_data["pending_setting"]
+    value = update.message.text.strip()
+    user_id = update.effective_user.id
+    chat_id = update.effective_chat.id
+    user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
+    doc = user_ref.get()
+
+    if not doc.exists:
+        set_user_payment(user_id)
+        await context.bot.send_message(chat_id=chat_id,text="🔄 User profile created. Please try again.")
+        return
+
+    if setting in ["AVERAGE", "STARTDATE", "STARTMONTH", "ENDDATE", "ENDMONTH"]:
+        if not value.isnumeric():
+            await context.bot.send_message(chat_id=chat_id,text="⚠️ Invalid input: Must be numeric.")
+            return
+        user_ref.update({setting.lower(): int(value)})
+    else:
+        await context.bot.send_message(chat_id=chat_id,text="⚠️ Invalid setting.")
+        return
+
+    await context.bot.send_message(chat_id=chat_id,text=f"✅ *{setting}* updated to `{value}`.", parse_mode="Markdown")
+    context.user_data.pop("pending_setting", None)
+
 
 async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -645,6 +678,7 @@ def main():
     app.add_handler(CommandHandler("setsettings", setsettings)) 
     app.add_handler(CommandHandler("membership", membership)) #/membership <user_id>
     app.add_handler(CallbackQueryHandler(handle_callback))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_setting_value))
 
     app.post_init = setup
     app.run_polling()
