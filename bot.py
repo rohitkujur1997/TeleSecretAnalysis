@@ -300,7 +300,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
             )
         me = await client.get_me()
-        await context.bot.send_message(chat_id=chat_id,text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Menu. ({user_id})",
+        await context.bot.send_message(chat_id=chat_id,text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Menu. (`{user_id}`)",
+                                            parse_mode="Markdown",
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                                             ]))
@@ -562,14 +563,6 @@ async def membership(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Membership status changed")
     except Exception as e:
             await update.message.reply_text(f"⚠️ Error: Member not exist")
-
-# This function is triggered when button is clicked
-async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()  # Acknowledge the button press
-
-    """ if query.data == "dailyclaim":
-        await dailyclaim(update,context) """
 
 async def send_long_message(client, entity, message, chunk_size=4096):
     for i in range(0, len(message), chunk_size):
