@@ -311,9 +311,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
 async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="📲 Choose an Option from Main Menu:",
+                                   text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Menu. (`{update.effective_user.id}`)"
+                                   f"📲 Choose an Option from Main Menu:",
                                    reply_markup=InlineKeyboardMarkup([
-                                                [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsetting')],
+                                                [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsettings')],
                                                 [InlineKeyboardButton("Suggest Stock(based on settings)", callback_data='suggest')],
                                                 [InlineKeyboardButton("Help", callback_data='help')]
                                             ]))
@@ -332,6 +333,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await help(update,context)
     elif query.data == "showsettings":
         await showsettings(update,context)
+    elif query.data == "setsettings":
+        await setsettings(update,context)
 
 async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -421,7 +424,7 @@ async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text=f"Nsadsdddsasadsadad",
+                                   text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Help Screen. (`{update.effective_user.id}`)",
                                    reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                                             ])
@@ -442,7 +445,8 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ed = data.get("end_date", 0)
         em = data.get("end_month", 0)
         await context.bot.send_message(chat_id=update.effective_chat.id,
-            text=f"📋 *Your Settings:*\n\n"
+            text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n"
+            f"📋 *@{update.effective_user.username if update.effective_user.username else 'No username'}'s Settings. (`{update.effective_user.id}`) Settings:*\n\n"
             f"🔢 *FNO:* `{FNO}`\n"
             f"📊 *Average:* `{Avg}`\n"
             f"📅 *Start Date:* `{sd}` {sm}\n"
