@@ -446,22 +446,37 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         em = data.get("end_month", 0)
         await context.bot.send_message(chat_id=update.effective_chat.id,
             text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n"
-            f"📋 *@{update.effective_user.username if update.effective_user.username else 'No username'}'s Settings. (`{update.effective_user.id}`) Settings:*\n\n"
+            f"📋 *@{update.effective_user.username if update.effective_user.username else 'No username'}'s Settings. (`{update.effective_user.id}`):*\n\n"
             f"🔢 *FNO:* `{FNO}`\n"
             f"📊 *Average:* `{Avg}`\n"
-            f"📅 *Start Date:* `{sd}` {sm}\n"
-            f"📅 *End Date:* `{ed}` {em}\n"
+            f"📅 *Start Date:* `{sd}`, {sm} (dd, mm)\n"
+            f"📅 *End Date:* `{ed}`, {em} (dd, mm)\n"
             f"🎟️ *Membership:* `{Membership}`",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                 ]))
     except Exception as e:
-        await update.message.reply_text(f"⚠️ Error: {e}")
+        context.bot.send_message(chat_id=update.effective_chat.id,
+            text=f"⚠️ Error: {e}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                ]))
 
 async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        if context.args:
+        keyboard = [
+            [InlineKeyboardButton("Toggle FNO", callback_data='set_FNO')],
+            [InlineKeyboardButton("Set AVERAGE", callback_data='set_AVERAGE')],
+            [InlineKeyboardButton("Set STARTDATE", callback_data='set_STARTDATE')],
+            [InlineKeyboardButton("Set STARTMONTH", callback_data='set_STARTMONTH')],
+            [InlineKeyboardButton("Set ENDDATE", callback_data='set_ENDDATE')],
+            [InlineKeyboardButton("Set ENDMONTH", callback_data='set_ENDMONTH')],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await update.message.reply_text("🛠 Choose a setting to update:", reply_markup=reply_markup)
+        """ if context.args:
             user_id = update.effective_user.id
             set = context.args[0]
             val = context.args[1]
@@ -563,7 +578,7 @@ async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         "`/setsettings FNO false`"
                     ),
                     parse_mode="Markdown"
-                )
+                ) """
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
 
