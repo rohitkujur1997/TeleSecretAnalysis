@@ -320,7 +320,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     next(reader)  # Skip header (row 1)
                     for row in reader:
                         if context.args[0].upper() in row[0]:
-                            await context.bot.send_message(chat_id=,text=f"Company Name: {row[1]}\nIndustry Name: {row[2]}")
+                            await context.bot.send_message(chat_id=chat_id,text=f"Company Name: {row[1]}\nIndustry Name: {row[2]}")
                 ticker_symbols = [context.args[0]+".NS"]
                 #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
             else:
