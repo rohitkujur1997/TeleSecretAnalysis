@@ -475,7 +475,8 @@ async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        await update.message.reply_text("🛠 Choose a setting to update:", reply_markup=reply_markup)
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+            text=f"🛠 Choose a setting to update:", reply_markup=reply_markup)
         """ if context.args:
             user_id = update.effective_user.id
             set = context.args[0]
