@@ -327,7 +327,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.delete()  # Deletes the previous message with the button
         await query.answer()          # Acknowledge the callback to remove the loading state
 
-    user_id = update.effective_user.id
+    user_id = query.from_user.id
     chat_id = update.effective_chat.id
 
     if query.data == "mainMenu":
