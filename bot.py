@@ -313,7 +313,7 @@ async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text="📲 Choose an Option from Main Menu:",
                                    reply_markup=InlineKeyboardMarkup([
-                                                [InlineKeyboardButton("My Settings",callback_data='showsetting'),InlineKeyboardButton("Change Settings",callback_data='setsetting')],
+                                                [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsetting')],
                                                 [InlineKeyboardButton("Suggest Stock(based on settings)", callback_data='suggest')],
                                                 [InlineKeyboardButton("Help", callback_data='help')]
                                             ]))
@@ -330,6 +330,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await mainMenu(update,context)
     elif query.data == "help":
         await help(update,context)
+    elif query.data == "showsettings":
+        await showsettings(update,context)
 
 async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -439,15 +441,17 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         sm = data.get("start_month", 0)
         ed = data.get("end_date", 0)
         em = data.get("end_month", 0)
-        await update.message.reply_text(
-            f"📋 *Your Settings:*\n\n"
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+            text=f"📋 *Your Settings:*\n\n"
             f"🔢 *FNO:* `{FNO}`\n"
             f"📊 *Average:* `{Avg}`\n"
             f"📅 *Start Date:* `{sd}` {sm}\n"
             f"📅 *End Date:* `{ed}` {em}\n"
             f"🎟️ *Membership:* `{Membership}`",
-            parse_mode="Markdown"
-            )
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                ]))
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
 
