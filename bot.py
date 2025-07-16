@@ -151,12 +151,18 @@ async def analysis(value,update:Update,context:ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=chat_id,
             text="✅ *Analysis completed successfully!*",
-            parse_mode="Markdown"
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+            ])
         )
     except Exception as ex:
         await context.bot.send_message(
             chat_id=chat_id,
-            text=f"⚠️ Error: {ex}"
+            text=f"⚠️ Error: {ex}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+            ])
             )
 
 def get_nearest_close(date, df):
@@ -197,12 +203,19 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
                             "% Change": round(pct, 2)
                         })
                 except Exception as e:
-                    await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}")
+                    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                                   text=f"Skipped {ticker_symbol} {year} due to error: {e}",
+                                                    reply_markup=InlineKeyboardMarkup([
+                                                        [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                                    ]))
                     continue
 
             all_results[ticker_symbol] = pd.DataFrame(results).sort_values('Year')
         except Exception as e:
-            await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}")
+            await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}",
+                                                    reply_markup=InlineKeyboardMarkup([
+                                                        [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                                    ]))
             continue
     if len(ticker_symbols)>1:
         user_id = update.effective_user.id
