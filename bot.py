@@ -338,6 +338,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await showsettings(update,context)
     elif query.data == "setsettings":
         await setsettings(update,context)
+    elif query.data == "suggest":
+        await suggest(update,context)
     elif query.data == 'set_FNO':
         # Toggle FNO directly (example of immediate action)
         user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
