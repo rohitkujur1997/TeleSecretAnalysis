@@ -353,6 +353,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await setsettings(update,context)
     elif query.data == "suggest":
         await suggest(update,context)
+    elif query.data == "suggested":
+        await suggested(update,context)
     elif query.data == 'set_FNO':
         # Toggle FNO directly (example of immediate action)
         user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
@@ -493,7 +495,9 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
     except Exception as e:
-        await update.message.reply_text(f"⚠️ Error: {e}")
+        await context.bot.send_message(
+                chat_id=chat_id,
+                text=f"⚠️ Error: {e}")
         await client.disconnect()
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -548,7 +552,11 @@ async def suggested(update:Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=update.effective_chat.id,
             text=f"📊 Choose a option:", reply_markup=reply_markup)
     except Exception as ex:
-        await update.message.reply_text(f"⚠️ Error: {e}")
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+            text=f"⚠️ Error: {ex}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                ]))
 
 async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -669,7 +677,10 @@ async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode="Markdown"
                 ) """
     except Exception as e:
-        await update.message.reply_text(f"⚠️ Error: {e}")
+        await context.bot.send_message(chat_id=update.effective_chat.id,text=f"⚠️ Error: {e}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                ]))
 
 async def membership(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -692,11 +703,12 @@ async def setup(application):
     # Set commands
     await application.bot.set_my_commands([
         BotCommand("start", "Start the bot"),
-        BotCommand("help", "Show help information"),
+        BotCommand("menu", "Display Main Menu"),
+        BotCommand("help", "Show help information")
         #BotCommand("analyze", "Analyze a stock (e.g., /analyze TCS)"),
-        BotCommand("suggest", "Get stock suggestions"),
-        BotCommand("showsettings", "View your current settings"),
-        BotCommand("setsettings", "Update your settings")
+        #BotCommand("suggest", "Get stock suggestions"),
+        #BotCommand("showsettings", "View your current settings"),
+        #BotCommand("setsettings", "Update your settings")
     ])
     # Set menu button to show commands
     await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
@@ -707,7 +719,7 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help))
-    #app.add_handler(CommandHandler("analyze", analyze)) 
+    app.add_handler(CommandHandler("menu", mainMenu)) 
     app.add_handler(CommandHandler("suggest", suggest)) 
     app.add_handler(CommandHandler("showsettings", showsettings)) 
     app.add_handler(CommandHandler("setsettings", setsettings)) 
