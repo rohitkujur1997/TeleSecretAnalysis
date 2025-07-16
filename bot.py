@@ -304,6 +304,9 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id
         await client.connect()
         user_id = update.effective_user.id
+        doc = db.collection("TeleSecretAnalysis").document(str(user_id)).get()
+        if not doc.exists:
+            set_user_payment(user_id)
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         Membership = data.get("Membership", False)
         if Membership:
@@ -312,6 +315,12 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user_id = update.effective_user.id
             await client.connect()
             if context.args and context.args[0]:
+                with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
+                    reader = csv.reader(csvfile)
+                    next(reader)  # Skip header (row 1)
+                    for row in reader:
+                        if context.args[0].upper() in row[0]:
+                            await context.bot.send_message(chat_id=,text=f"Company Name: {row[1]}\nIndustry Name: {row[2]}")
                 ticker_symbols = [context.args[0]+".NS"]
                 #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
             else:
@@ -356,7 +365,10 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        user_id = update.effective_user.id
+        user_id = update.effective_user.id        
+        doc = db.collection("TeleSecretAnalysis").document(str(user_id)).get()
+        if not doc.exists:
+            set_user_payment(user_id)
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         FNO = data.get("FNO", False)
         Membership = data.get("Membership", False)
@@ -382,7 +394,10 @@ async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user_id = update.effective_user.id
             set = context.args[0]
             val = context.args[1]
-            user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
+            doc = db.collection("TeleSecretAnalysis").document(str(user_id)).get()
+            if not doc.exists:
+                set_user_payment(user_id)
+            user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))            
             doc = user_ref.get()
             if doc.exists:
                 if set.upper()=="FNO":
@@ -442,7 +457,7 @@ async def membership(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user_ref.update({"Membership": not Membership})
         await update.message.reply_text(f"Membership status changed")
     except Exception as e:
-            await update.message.reply_text(f"⚠️ Error: {e}")
+            await update.message.reply_text(f"⚠️ Error: Member not exist")
 
 # This function is triggered when button is clicked
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
