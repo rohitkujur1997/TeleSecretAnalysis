@@ -327,6 +327,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if query.data == "mainMenu":
         await mainMenu(update,context)
+    elif query.data == "help":
+        await help(update,context)
 
 async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
