@@ -1,4 +1,5 @@
 import os, asyncio, pytz
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
 from telegram import Update, BotCommand, MenuButtonCommands
@@ -298,10 +299,33 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔗 *Invite Link:* `https://t.me/{context.bot.username}?start={user_id}`"),
             parse_mode="Markdown"
             )
+        me = await client.get_me()
+        await context.bot.send_message(chat_id=chat_id,text=+me.phone+"'s Menu.",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ]))
     except Exception as e:
         await update.message.reply_text(f"Session error: {e}")
         await client.disconnect()
         return
+    
+async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="📲 Choose an Option from Main Menu:",
+                                   reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("My Settings",callback_data='showsetting'),InlineKeyboardButton("Change Settings",callback_data='setsetting')],
+                                                [InlineKeyboardButton("Suggest Stock(based on settings)", callback_data='suggest')],
+                                                [InlineKeyboardButton("Help", callback_data='help')]
+                                            ]))
+    return
+
+# This function is triggered when button is clicked
+async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()  # Acknowledge the button press
+
+    if query.data == "mainMenu":
+        await mainMenu(update,context)
 
 async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
