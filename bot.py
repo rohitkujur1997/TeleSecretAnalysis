@@ -325,7 +325,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query:
         await query.message.delete()  # Deletes the previous message with the button
         await query.answer()          # Acknowledge the callback to remove the loading state
-    #await query.answer()  # Acknowledge the button press
 
     if query.data == "mainMenu":
         await mainMenu(update,context)
@@ -419,7 +418,16 @@ async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await client.disconnect()
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(f"Nsadsdddsasadsadad")
+    query = update.callback_query
+    if query:
+        await query.message.delete()  # Deletes the previous message with the button
+        await query.answer()          # Acknowledge the callback to remove the loading state
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=f"Nsadsdddsasadsadad",
+                                   reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ])
+                                            )
 
 async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
