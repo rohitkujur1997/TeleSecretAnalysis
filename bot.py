@@ -453,41 +453,24 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_id = update.effective_chat.id
             user_id = update.effective_user.id
             await client.connect()
-            if context.args and context.args[0]:
-                with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
-                    reader = csv.reader(csvfile)
-                    next(reader)  # Skip header (row 1)
-                    for row in reader:
-                        if context.args[0].upper() in row[0]:
-                            await context.bot.send_message(
-                                chat_id=chat_id,
-                                text=(
-                                    f"🏢 *Company Name:* `{row[1]}`\n"
-                                    f"🏭 *Industry:* `{row[2]}`"
-                                ),
-                                parse_mode="Markdown"
-                            )
-                ticker_symbols = [context.args[0]+".NS"]
-                #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
-            else:
-                values = []
-                #data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
-                FNO = data.get("FNO", False)
+            values = []
+            #data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+            FNO = data.get("FNO", False)
 
-                # Open the CSV file
-                with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
-                    reader = csv.reader(csvfile)
-                    next(reader)  # Skip header (row 1)
+            # Open the CSV file
+            with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)  # Skip header (row 1)
 
-                    for row in reader:
-                        if len(row) >= 4 and row[3].strip().upper() == str(FNO).upper():
-                            values.append(row[0])
-                ticker_symbols = [item + ".NS" for item in values]                        
-                await context.bot.send_message(
-                    chat_id=chat_id,
-                    text=f"🔍 *Analyzing {len(ticker_symbols)} stocks* based on your FNO settings...",
-                    parse_mode="Markdown"
-                )
+                for row in reader:
+                    if len(row) >= 4 and row[3].strip().upper() == str(FNO).upper():
+                        values.append(row[0])
+            ticker_symbols = [item + ".NS" for item in values]                        
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=f"🔍 *Analyzing {len(ticker_symbols)} stocks* based on your FNO settings...",
+                parse_mode="Markdown"
+            )
             await suggestion(ticker_symbols,update,context)
             await context.bot.send_message(
                 chat_id=chat_id,
