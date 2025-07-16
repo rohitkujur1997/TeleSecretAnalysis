@@ -139,13 +139,25 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
     os.remove(filename)
 
 
-async def analysis(update:Update,context:ContextTypes.DEFAULT_TYPE):
-    ticker = context.args[0]+".NS"
-    current_year = datetime.today().year
-    start_year = 1995
+async def analysis(value,update:Update,context:ContextTypes.DEFAULT_TYPE):
+    try:
+        chat_id = update.effective_chat.id
+        ticker = value+".NS"
+        current_year = datetime.today().year
+        start_year = 1995
 
-    yearly_data = download_monthly_data(ticker, start_year, current_year)
-    await plot_yearly_grid(yearly_data, ticker,update,context)
+        yearly_data = download_monthly_data(ticker, start_year, current_year)
+        await plot_yearly_grid(yearly_data, ticker,update,context)    
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="✅ *Analysis completed successfully!*",
+            parse_mode="Markdown"
+        )
+    except Exception as ex:
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=f"⚠️ Error: {ex}"
+            )
 
 def get_nearest_close(date, df):
     while date not in df.index and date >= df.index.min():
@@ -315,7 +327,8 @@ async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    f"📲 Choose an Option from Main Menu:",
                                    reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsettings')],
-                                                [InlineKeyboardButton("Suggest Stock(based on settings)", callback_data='suggest')],
+                                                [InlineKeyboardButton("Suggest All Stock(based on settings)", callback_data='suggest')],
+                                                [InlineKeyboardButton("Check Suggested(based on settings)", callback_data='suggested')],
                                                 [InlineKeyboardButton("Help", callback_data='help')]
                                             ]))
     return
@@ -389,6 +402,11 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
                                             ]))
             return
         user_ref.update({setting.lower(): int(value)})
+    elif setting in ["ANALYZE", "SUGGESTED"]:
+        if setting == "ANALYZE":
+            await analysis(value,update,context)
+        if setting == "SUGGESTED":
+            pass
     else:
         await context.bot.send_message(chat_id=chat_id,text="⚠️ Invalid setting.",
                                             reply_markup=InlineKeyboardMarkup([
@@ -459,31 +477,20 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(
                 chat_id=chat_id,
                 text="✅ *Suggestions have been generated based on your settings.!*",
-                parse_mode="Markdown"
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                    ])
             )
         else:
             await context.bot.send_message(
                 chat_id=chat_id,
                 text="🔒 Access Denied: Your *membership is inactive*. Please activate it to proceed.",
-                parse_mode="Markdown"
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                    ])
             )
-
-    except Exception as e:
-        await update.message.reply_text(f"⚠️ Error: {e}")
-        await client.disconnect()
-
-async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        chat_id = update.effective_chat.id
-
-        client = TelegramClient(StringSession(), api_id, api_hash)
-        await client.connect()
-        await analysis(update,context)
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text="✅ *Analysis completed successfully!*",
-            parse_mode="Markdown"
-        )
 
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
@@ -529,6 +536,19 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                 ]))
+
+async def suggested(update:Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        keyboard = [
+            [InlineKeyboardButton("Specific Stock", callback_data='set_SUGGESTED')],
+            [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+            text=f"📊 Choose a option:", reply_markup=reply_markup)
+    except Exception as ex:
+        await update.message.reply_text(f"⚠️ Error: {e}")
 
 async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -673,7 +693,7 @@ async def setup(application):
     await application.bot.set_my_commands([
         BotCommand("start", "Start the bot"),
         BotCommand("help", "Show help information"),
-        BotCommand("analyze", "Analyze a stock (e.g., /analyze TCS)"),
+        #BotCommand("analyze", "Analyze a stock (e.g., /analyze TCS)"),
         BotCommand("suggest", "Get stock suggestions"),
         BotCommand("showsettings", "View your current settings"),
         BotCommand("setsettings", "Update your settings")
@@ -687,7 +707,7 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help))
-    app.add_handler(CommandHandler("analyze", analyze)) 
+    #app.add_handler(CommandHandler("analyze", analyze)) 
     app.add_handler(CommandHandler("suggest", suggest)) 
     app.add_handler(CommandHandler("showsettings", showsettings)) 
     app.add_handler(CommandHandler("setsettings", setsettings)) 
