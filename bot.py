@@ -299,7 +299,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔗 *Invite Link:* `https://t.me/{context.bot.username}?start={user_id}`"),
             parse_mode="Markdown"
             )
-        me = await client.get_me()
         await context.bot.send_message(chat_id=chat_id,text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Menu. (`{user_id}`)",
                                             parse_mode="Markdown",
                                             reply_markup=InlineKeyboardMarkup([
@@ -323,7 +322,10 @@ async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # This function is triggered when button is clicked
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()  # Acknowledge the button press
+    if query:
+        await query.message.delete()  # Deletes the previous message with the button
+        await query.answer()          # Acknowledge the callback to remove the loading state
+    #await query.answer()  # Acknowledge the button press
 
     if query.data == "mainMenu":
         await mainMenu(update,context)
