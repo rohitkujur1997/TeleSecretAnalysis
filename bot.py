@@ -327,6 +327,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.delete()  # Deletes the previous message with the button
         await query.answer()          # Acknowledge the callback to remove the loading state
 
+    user_id = query.from_user.id
+
     if query.data == "mainMenu":
         await mainMenu(update,context)
     elif query.data == "help":
@@ -335,6 +337,17 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await showsettings(update,context)
     elif query.data == "setsettings":
         await setsettings(update,context)
+    elif query.data == 'set_FNO':
+        # Toggle FNO directly (example of immediate action)
+        user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
+        doc = user_ref.get()
+        if doc.exists:
+            current_value = doc.to_dict().get("FNO", False)
+            user_ref.update({"FNO": not current_value})
+            await query.edit_message_text(f"✅ FNO set to `{not current_value}`.", parse_mode="Markdown")
+        else:
+            set_user_payment(user_id)
+            await query.edit_message_text("🔄 User profile created. Please try again.")
 
 async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
