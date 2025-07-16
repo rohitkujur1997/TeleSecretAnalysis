@@ -291,7 +291,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"💼 *Account ID:* `{user_id}`\n"
             f"🔢 *FNO:* `{FNO}`\n"
             f"🎟️ *Membership:* `{Membership}`\n"
-            f"📊 *Average:* `{Avg}`\n\n"
+            f"📊 *Average:* `{Avg}`%\n\n"
             "📌 *Commands to Get Started:*\n"
             "`/analyze <Stock Name>` – Analyze a stock\n"
             "`/suggest` – Get stock suggestions\n"
@@ -344,10 +344,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if doc.exists:
             current_value = doc.to_dict().get("FNO", False)
             user_ref.update({"FNO": not current_value})
-            await query.edit_message_text(f"✅ FNO set to `{not current_value}`.", parse_mode="Markdown")
+            await context.bot.send_message(chat_id=user_id,text=f"✅ FNO set to `{not current_value}`.", parse_mode="Markdown")
         else:
             set_user_payment(user_id)
-            await query.edit_message_text("🔄 User profile created. Please try again.")
+            await context.bot.send_message(chat_id=user_id,text="🔄 User profile created. Please try again.")
 
 async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -461,7 +461,7 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n"
             f"📋 *@{update.effective_user.username if update.effective_user.username else 'No username'}'s Settings. (`{update.effective_user.id}`):*\n\n"
             f"🔢 *FNO:* `{FNO}`\n"
-            f"📊 *Average:* `{Avg}`\n"
+            f"📊 *Average:* `{Avg}`%\n"
             f"📅 *Start Date:* `{sd}`, {sm} (dd, mm)\n"
             f"📅 *End Date:* `{ed}`, {em} (dd, mm)\n"
             f"🎟️ *Membership:* `{Membership}`",
