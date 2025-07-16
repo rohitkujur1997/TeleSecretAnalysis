@@ -328,8 +328,8 @@ async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsettings')],
                                                 [InlineKeyboardButton("Suggest All Stock(based on settings)", callback_data='suggest')],
-                                                [InlineKeyboardButton("Check Suggested(based on settings)", callback_data='suggested')],
-                                                [InlineKeyboardButton("Help", callback_data='help')]
+                                                [InlineKeyboardButton("Check Suggested Stock(based on settings)", callback_data='set_SUGGESTED')],
+                                                [InlineKeyboardButton("Analyze Stock Graph", callback_data='set_ANALYZE'),InlineKeyboardButton("Help", callback_data='help')]
                                             ]))
     return
 
@@ -353,8 +353,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await setsettings(update,context)
     elif query.data == "suggest":
         await suggest(update,context)
-    elif query.data == "suggested":
-        await suggested(update,context)
     elif query.data == 'set_FNO':
         # Toggle FNO directly (example of immediate action)
         user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
@@ -408,7 +406,7 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
         if setting == "ANALYZE":
             await analysis(value,update,context)
         if setting == "SUGGESTED":
-            pass
+            await suggested(value,update,context)
     else:
         await context.bot.send_message(chat_id=chat_id,text="⚠️ Invalid setting.",
                                             reply_markup=InlineKeyboardMarkup([
@@ -541,17 +539,58 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                 ]))
 
-async def suggested(update:Update, context: ContextTypes.DEFAULT_TYPE):
+async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        keyboard = [
-            [InlineKeyboardButton("Specific Stock", callback_data='set_SUGGESTED')],
-            [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        await context.bot.send_message(chat_id=update.effective_chat.id,
-            text=f"📊 Choose a option:", reply_markup=reply_markup)
+        client = TelegramClient(StringSession(), api_id, api_hash)
+        chat_id = update.effective_chat.id
+        user_id = update.effective_user.id
+        await client.connect()
+        user_id = update.effective_user.id
+        doc = db.collection("TeleSecretAnalysis").document(str(user_id)).get()
+        if not doc.exists:
+            set_user_payment(user_id)
+        data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+        Membership = data.get("Membership", False)
+        if Membership:
+            client = TelegramClient(StringSession(), api_id, api_hash)
+            chat_id = update.effective_chat.id
+            user_id = update.effective_user.id
+            await client.connect()
+            with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)  # Skip header (row 1)
+                for row in reader:
+                    if value.upper() in row[0]:
+                        await context.bot.send_message(
+                            chat_id=chat_id,
+                            text=(
+                                f"🏢 *Company Name:* `{row[1]}`\n"
+                                f"🏭 *Industry:* `{row[2]}`"
+                            ),
+                            parse_mode="Markdown"
+                        )
+            ticker_symbols = [value+".NS"]
+                #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
+            await suggestion(ticker_symbols,update,context)
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text="✅ *Suggestions have been generated based on your settings.!*",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                    ])
+            )
+        else:
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text="🔒 Access Denied: Your *membership is inactive*. Please activate it to proceed.",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                    ])
+            )
     except Exception as ex:
+        await client.disconnect()
         await context.bot.send_message(chat_id=update.effective_chat.id,
             text=f"⚠️ Error: {ex}",
             reply_markup=InlineKeyboardMarkup([
