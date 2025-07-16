@@ -405,8 +405,10 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
     elif setting in ["ANALYZE", "SUGGESTED"]:
         if setting == "ANALYZE":
             await analysis(value,update,context)
+            return
         if setting == "SUGGESTED":
             await suggested(value,update,context)
+            return
     else:
         await context.bot.send_message(chat_id=chat_id,text="⚠️ Invalid setting.",
                                             reply_markup=InlineKeyboardMarkup([
