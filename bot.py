@@ -373,19 +373,31 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
 
     if not doc.exists:
         set_user_payment(user_id)
-        await context.bot.send_message(chat_id=chat_id,text="🔄 User profile created. Please try again.")
+        await context.bot.send_message(chat_id=chat_id,text="🔄 User profile created. Please try again.",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Change Settings",callback_data='setsettings')]
+                                            ]))
         return
 
     if setting in ["AVERAGE", "STARTDATE", "STARTMONTH", "ENDDATE", "ENDMONTH"]:
         if not value.isnumeric():
-            await context.bot.send_message(chat_id=chat_id,text="⚠️ Invalid input: Must be numeric.")
+            await context.bot.send_message(chat_id=chat_id,text="⚠️ Invalid input: Must be numeric.",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Change Settings",callback_data='setsettings')]
+                                            ]))
             return
         user_ref.update({setting.lower(): int(value)})
     else:
-        await context.bot.send_message(chat_id=chat_id,text="⚠️ Invalid setting.")
+        await context.bot.send_message(chat_id=chat_id,text="⚠️ Invalid setting.",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Change Settings",callback_data='setsettings')]
+                                            ]))
         return
 
-    await context.bot.send_message(chat_id=chat_id,text=f"✅ *{setting}* updated to `{value}`.", parse_mode="Markdown")
+    await context.bot.send_message(chat_id=chat_id,text=f"✅ *{setting}* updated to `{value}`.", parse_mode="Markdown",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Change Settings",callback_data='setsettings')]
+                                            ]))
     context.user_data.pop("pending_setting", None)
 
 
@@ -525,6 +537,7 @@ async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("Set STARTMONTH", callback_data='set_STARTMONTH')],
             [InlineKeyboardButton("Set ENDDATE", callback_data='set_ENDDATE')],
             [InlineKeyboardButton("Set ENDMONTH", callback_data='set_ENDMONTH')],
+            [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
