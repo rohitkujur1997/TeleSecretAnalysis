@@ -282,16 +282,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         Membership = data.get("Membership", False)
         Avg = data.get("Average", 0)
 
-        await update.message.reply_text(text=f"🙌Welcome to the TeleSecretAnalysis Bot!\n"
-                                        f"Here you can analyze any listed indian stock.🚀\n"
-                                        f"📢Devs Group:@\n\n"
-                                        f"💼Account: `{user_id}`\n"
-                                        f"FNO: {FNO},\nMembership: {Membership},\nAverage: {Avg}\n\n"
-                                        f"Type /analyze <Stock Name>\n"
-                                        f"Type /suggest\n"
-                                        f"🆘Use /help to see all available commands.\n\n"
-                                        f"🔗Invite Link: `https//t.me/{context.bot.username}?start={user_id}`",
-                                        parse_mode="Markdown")
+        await update.message.reply_text(
+            text=(
+            "🙌 *Welcome to the TeleSecretAnalysis Bot!*\n\n"
+            "Here you can analyze any listed Indian stock. 🚀\n\n"
+            "📢 *Devs Group:* @\n\n"
+            f"💼 *Account ID:* `{user_id}`\n"
+            f"🔢 *FNO:* `{FNO}`\n"
+            f"🎟️ *Membership:* `{Membership}`\n"
+            f"📊 *Average:* `{Avg}`\n\n"
+            "📌 *Commands to Get Started:*\n"
+            "`/analyze <Stock Name>` – Analyze a stock\n"
+            "`/suggest` – Get stock suggestions\n"
+            "`/help` – See all available commands 🆘\n\n"
+            f"🔗 *Invite Link:* `https://t.me/{context.bot.username}?start={user_id}`"),
+            parse_mode="Markdown"
+            )
     except Exception as e:
         await update.message.reply_text(f"Session error: {e}")
         await client.disconnect()
@@ -320,7 +326,14 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     next(reader)  # Skip header (row 1)
                     for row in reader:
                         if context.args[0].upper() in row[0]:
-                            await context.bot.send_message(chat_id=chat_id,text=f"Company Name: {row[1]}\nIndustry Name: {row[2]}")
+                            await context.bot.send_message(
+                                chat_id=chat_id,
+                                text=(
+                                    f"🏢 *Company Name:* `{row[1]}`\n"
+                                    f"🏭 *Industry:* `{row[2]}`"
+                                ),
+                                parse_mode="Markdown"
+                            )
                 ticker_symbols = [context.args[0]+".NS"]
                 #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
             else:
@@ -337,11 +350,23 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         if len(row) >= 4 and row[3].strip().upper() == str(FNO).upper():
                             values.append(row[0])
                 ticker_symbols = [item + ".NS" for item in values]                        
-                await context.bot.send_message(chat_id=chat_id,text=f"Checking {len(ticker_symbols)} stocks according to your FNO settings.")
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=f"🔍 *Analyzing {len(ticker_symbols)} stocks* based on your FNO settings...",
+                    parse_mode="Markdown"
+                )
             await suggestion(ticker_symbols,update,context)
-            await context.bot.send_message(chat_id=chat_id,text=f"Suggestion Done.")
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text="✅ *Suggestions have been generated based on your settings.!*",
+                parse_mode="Markdown"
+            )
         else:
-            await context.bot.send_message(chat_id=chat_id,text=f"Membership is Inactive")
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text="🔒 Access Denied: Your *membership is inactive*. Please activate it to proceed.",
+                parse_mode="Markdown"
+            )
 
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
@@ -354,7 +379,11 @@ async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
         client = TelegramClient(StringSession(), api_id, api_hash)
         await client.connect()
         await analysis(update,context)
-        await context.bot.send_message(chat_id=chat_id,text=f"Analysis Done.")
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="✅ *Analysis completed successfully!*",
+            parse_mode="Markdown"
+        )
 
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
@@ -377,14 +406,15 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         sm = data.get("start_month", 0)
         ed = data.get("end_date", 0)
         em = data.get("end_month", 0)
-        await update.message.reply_text(f"Your Settings:\n\n"
-                                        f"FNO: {FNO}\n"
-                                        f"Average: {Avg}\n"
-                                        f"StartDate: {sd}\n"
-                                        f"StartMonth: {sm}\n"
-                                        f"EndDate: {ed}\n"
-                                        f"EndMonth: {em}\n"
-                                        f"Membership: {Membership}")
+        await update.message.reply_text(
+            f"📋 *Your Settings:*\n\n"
+            f"🔢 *FNO:* `{FNO}`\n"
+            f"📊 *Average:* `{Avg}`\n"
+            f"📅 *Start Date:* `{sd}` {sm}\n"
+            f"📅 *End Date:* `{ed}` {em}\n"
+            f"🎟️ *Membership:* `{Membership}`",
+            parse_mode="Markdown"
+            )
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
 
@@ -403,46 +433,96 @@ async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if set.upper()=="FNO":
                     if val.upper()=="TRUE":
                         user_ref.update({"FNO": True})
-                        await update.message.reply_text(f"FNO Updated")
+                        await update.message.reply_text(
+                            text="✅ *FNO* setting has been updated successfully.",
+                            parse_mode="Markdown"
+                        )
                     elif val.upper()=="FALSE":
                         user_ref.update({"FNO": False})
-                        await update.message.reply_text(f"FNO Updated")
+                        await update.message.reply_text(
+                            text="✅ *FNO* setting has been updated successfully.",
+                            parse_mode="Markdown"
+                        )
                     else:
-                        await update.message.reply_text(f"Invalid Input\n true/false")
+                        await update.message.reply_text(
+                            text="⚠️ Invalid input.\nExpected values: `true` or `false`.",
+                            parse_mode="Markdown"
+                        )
                 elif set.upper()=="AVERAGE":
                     if val.isnumeric():
                         user_ref.update({"Average": int(val)})
-                        await update.message.reply_text(f"Average Updated")
+                        await update.message.reply_text(
+                            text="✅ *Average* has been updated successfully.",
+                            parse_mode="Markdown"
+                        )
                     else:
-                        await update.message.reply_text(f"Invalid Input\n Number not numeric")
+                        await update.message.reply_text(
+                            text="⚠️ Invalid input: Number must be numeric.",
+                            parse_mode="Markdown"
+                        )
                 elif set.upper()=="STARTDATE":
                     if val.isnumeric():
                         user_ref.update({"start_date": int(val)})
-                        await update.message.reply_text(f"STARTDATE Updated")
+                        await update.message.reply_text(
+                            text="📅 Your *STARTDATE* setting is now updated!",
+                            parse_mode="Markdown"
+                        )
                     else:
-                        await update.message.reply_text(f"Invalid Input\n Number not numeric")
+                        await update.message.reply_text(
+                            text="⚠️ Invalid input: Number must be numeric.",
+                            parse_mode="Markdown"
+                        )
                 elif set.upper()=="STARTMONTH":
                     if val.isnumeric():
                         user_ref.update({"start_month": int(val)})
-                        await update.message.reply_text(f"STARTMONTH Updated")
+                        await update.message.reply_text(
+                            text="📅 Your *STARTMONTH* setting is now updated!",
+                            parse_mode="Markdown"
+                        )
                     else:
-                        await update.message.reply_text(f"Invalid Input\n Number not numeric")
+                        await update.message.reply_text(
+                            text="⚠️ Invalid input: Number must be numeric.",
+                            parse_mode="Markdown"
+                        )
                 elif set.upper()=="ENDDATE":
                     if val.isnumeric():
                         user_ref.update({"end_date": int(val)})
-                        await update.message.reply_text(f"ENDDATE Updated")
+                        await update.message.reply_text(
+                            text="📅 Your *ENDDATE* setting is now updated!",
+                            parse_mode="Markdown"
+                        )
                     else:
-                        await update.message.reply_text(f"Invalid Input\n Number not numeric")
+                        await update.message.reply_text(
+                            text="⚠️ Invalid input: Number must be numeric.",
+                            parse_mode="Markdown"
+                        )
                 elif set.upper()=="ENDMONTH":
                     if val.isnumeric():
                         user_ref.update({"end_month": int(val)})
-                        await update.message.reply_text(f"ENDMONTH Updated")
+                        await update.message.reply_text(
+                            text="📅 Your *ENDMONTH* setting is now updated!",
+                            parse_mode="Markdown"
+                        )
                     else:
-                        await update.message.reply_text(f"Invalid Input\n Number not numeric")
+                        await update.message.reply_text(
+                            text="⚠️ Invalid input: Number must be numeric.",
+                            parse_mode="Markdown"
+                        )
                 else:
-                    await update.message.reply_text(f"Invalid Input")
+                    await update.message.reply_text(
+                        text="⚠️ Invalid input. Try again.",
+                        parse_mode="Markdown"
+                    )
             else:
-                await update.message.reply_text(f"/setsettings <parameter> <value>\nExample\n/setsettings FNO false")
+                await update.message.reply_text(
+                    text=(
+                        "⚙️ *Set Your Preferences*\n\n"
+                        "`/setsettings <parameter> <value>`\n"
+                        "📌 *Example:*\n"
+                        "`/setsettings FNO false`"
+                    ),
+                    parse_mode="Markdown"
+                )
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error: {e}")
 
@@ -475,11 +555,11 @@ async def setup(application):
     # Set commands
     await application.bot.set_my_commands([
         BotCommand("start", "Start the bot"),
-        BotCommand("help", "Get help"),
-        BotCommand("analyze", "<Stock Name> \nGet charts"),
-        BotCommand("suggest", "Get charts"),
-        BotCommand("showsettings", "For viewing settings"),
-        BotCommand("setsettings", "For changing settings")
+        BotCommand("help", "Show help information"),
+        BotCommand("analyze", "Analyze a stock (e.g., /analyze TCS)"),
+        BotCommand("suggest", "Get stock suggestions"),
+        BotCommand("showsettings", "View your current settings"),
+        BotCommand("setsettings", "Update your settings")
     ])
     # Set menu button to show commands
     await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
