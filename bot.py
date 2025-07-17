@@ -307,10 +307,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         FNO = data.get("FNO", False)
         Membership = data.get("Membership", False)
         Avg = data.get("AVERAGE", 0)
-        start_day, start_month = data.get("STARTDATE", 0), data.get("STARTMONTH", 0)
-        end_day, end_month = data.get("ENDDATE", 0), data.get("ENDMONTH", 0)
+        sd = data.get("STARTDATE", 0)
+        sm = data.get("STARTMONTH", 0)
+        ed = data.get("ENDDATE", 0)
+        em = data.get("ENDMONTH", 0)
 
-        await update.message.reply_text(
+        await context.bot.send_message(chat_id=chat_id,
             text=(
             "🙌 *Welcome to the TeleSecretAnalysis Bot!*\n\n"
             "Here you can analyze any listed Indian stock. 🚀\n\n"
@@ -319,8 +321,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔢 *FNO:* `{FNO}`\n"
             f"🎟️ *Membership:* `{Membership}`\n"
             f"📊 *Average:* `{Avg}`%\n"
-            f"📊 *Start:* `{start_day}, {start_month} (dd,mm)`\n"
-            f"📊 *End:* `{end_day}, {end_month} (dd,mm)\n\n"
+            f"📅 *Start Date:* `{sd}`, {sm} (dd, mm)\n"
+            f"📅 *End Date:* `{ed}`, {em} (dd, mm)\n"
             "📌 *Commands to Get Started:*\n"
             "`/start` – To Start the Bot\n"
             "`/help` – See all available commands 🆘\n\n"
@@ -376,7 +378,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if doc.exists:
             current_value = doc.to_dict().get("FNO", False)
             user_ref.update({"FNO": not current_value})
-            await context.bot.send_message(chat_id=chat_id,text=f"✅ FNO set to `{not current_value}`.", parse_mode="Markdown",
+            await context.bot.send_message(chat_id=chat_id,text=f"✅ FNO set to `{not current_value}`.", parse_mode="Markdown")
+            await context.bot.send_message(chat_id=chat_id,text=f"Go back to Main Menu.",
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                                             ]))
@@ -432,7 +435,8 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
                                             ]))
         return
 
-    await context.bot.send_message(chat_id=chat_id,text=f"✅ *{setting}* updated to `{value}`.", parse_mode="Markdown",
+    await context.bot.send_message(chat_id=chat_id,text=f"✅ *{setting}* updated to `{value}`.", parse_mode="Markdown")
+    await context.bot.send_message(chat_id=chat_id,text=f"Go back to Change Settings.",
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Change Settings",callback_data='setsettings')]
                                             ]))
@@ -478,11 +482,12 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(
                 chat_id=chat_id,
                 text="✅ *Suggestions have been generated based on your settings.!*",
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
-                    ])
+                parse_mode="Markdown"
             )
+            await context.bot.send_message(chat_id=chat_id,text=f"Go back to Main Menu.",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ]))
         else:
             await context.bot.send_message(
                 chat_id=chat_id,
@@ -530,10 +535,11 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📅 *Start Date:* `{sd}`, {sm} (dd, mm)\n"
             f"📅 *End Date:* `{ed}`, {em} (dd, mm)\n"
             f"🎟️ *Membership:* `{Membership}`",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
-                ]))
+            parse_mode="Markdown")
+        await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Go back to Main Menu.",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ]))
     except Exception as e:
         context.bot.send_message(chat_id=update.effective_chat.id,
             text=f"⚠️ Error: {e}",
@@ -577,11 +583,12 @@ async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(
                 chat_id=chat_id,
                 text="✅ *Suggestions have been generated based on your settings.!*",
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
-                    ])
+                parse_mode="Markdown"
             )
+            await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Go back to Main Menu.",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ]))
         else:
             await context.bot.send_message(
                 chat_id=chat_id,
@@ -614,109 +621,6 @@ async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await context.bot.send_message(chat_id=update.effective_chat.id,
             text=f"🛠 Choose a setting to update:", reply_markup=reply_markup)
-        """ if context.args:
-            user_id = update.effective_user.id
-            set = context.args[0]
-            val = context.args[1]
-            doc = db.collection("TeleSecretAnalysis").document(str(user_id)).get()
-            if not doc.exists:
-                set_user_payment(user_id)
-            user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))            
-            doc = user_ref.get()
-            if doc.exists:
-                if set.upper()=="FNO":
-                    if val.upper()=="TRUE":
-                        user_ref.update({"FNO": True})
-                        await update.message.reply_text(
-                            text="✅ *FNO* setting has been updated successfully.",
-                            parse_mode="Markdown"
-                        )
-                    elif val.upper()=="FALSE":
-                        user_ref.update({"FNO": False})
-                        await update.message.reply_text(
-                            text="✅ *FNO* setting has been updated successfully.",
-                            parse_mode="Markdown"
-                        )
-                    else:
-                        await update.message.reply_text(
-                            text="⚠️ Invalid input.\nExpected values: `true` or `false`.",
-                            parse_mode="Markdown"
-                        )
-                elif set.upper()=="AVERAGE":
-                    if val.isnumeric():
-                        user_ref.update({"Average": int(val)})
-                        await update.message.reply_text(
-                            text="✅ *Average* has been updated successfully.",
-                            parse_mode="Markdown"
-                        )
-                    else:
-                        await update.message.reply_text(
-                            text="⚠️ Invalid input: Number must be numeric.",
-                            parse_mode="Markdown"
-                        )
-                elif set.upper()=="STARTDATE":
-                    if val.isnumeric():
-                        user_ref.update({"start_date": int(val)})
-                        await update.message.reply_text(
-                            text="📅 Your *STARTDATE* setting is now updated!",
-                            parse_mode="Markdown"
-                        )
-                    else:
-                        await update.message.reply_text(
-                            text="⚠️ Invalid input: Number must be numeric.",
-                            parse_mode="Markdown"
-                        )
-                elif set.upper()=="STARTMONTH":
-                    if val.isnumeric():
-                        user_ref.update({"start_month": int(val)})
-                        await update.message.reply_text(
-                            text="📅 Your *STARTMONTH* setting is now updated!",
-                            parse_mode="Markdown"
-                        )
-                    else:
-                        await update.message.reply_text(
-                            text="⚠️ Invalid input: Number must be numeric.",
-                            parse_mode="Markdown"
-                        )
-                elif set.upper()=="ENDDATE":
-                    if val.isnumeric():
-                        user_ref.update({"end_date": int(val)})
-                        await update.message.reply_text(
-                            text="📅 Your *ENDDATE* setting is now updated!",
-                            parse_mode="Markdown"
-                        )
-                    else:
-                        await update.message.reply_text(
-                            text="⚠️ Invalid input: Number must be numeric.",
-                            parse_mode="Markdown"
-                        )
-                elif set.upper()=="ENDMONTH":
-                    if val.isnumeric():
-                        user_ref.update({"end_month": int(val)})
-                        await update.message.reply_text(
-                            text="📅 Your *ENDMONTH* setting is now updated!",
-                            parse_mode="Markdown"
-                        )
-                    else:
-                        await update.message.reply_text(
-                            text="⚠️ Invalid input: Number must be numeric.",
-                            parse_mode="Markdown"
-                        )
-                else:
-                    await update.message.reply_text(
-                        text="⚠️ Invalid input. Try again.",
-                        parse_mode="Markdown"
-                    )
-            else:
-                await update.message.reply_text(
-                    text=(
-                        "⚙️ *Set Your Preferences*\n\n"
-                        "`/setsettings <parameter> <value>`\n"
-                        "📌 *Example:*\n"
-                        "`/setsettings FNO false`"
-                    ),
-                    parse_mode="Markdown"
-                ) """
     except Exception as e:
         await context.bot.send_message(chat_id=update.effective_chat.id,text=f"⚠️ Error: {e}",
             reply_markup=InlineKeyboardMarkup([
