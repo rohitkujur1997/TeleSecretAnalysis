@@ -46,11 +46,11 @@ def set_user_payment(user_id):
     db.collection("TeleSecretAnalysis").document(str(user_id)).set({
         "Membership": False,
         "FNO": True,
-        "Average": 20,
-        "start_date":10,
-        "start_month":5,
-        "end_date":30,
-        "end_month":6,
+        "AVERAGE": 20,
+        "STARTDATE":10,
+        "STARTMONTH":5,
+        "ENDDATE":30,
+        "ENDMONTH":6,
         "bot_started": today_str
     })
 
@@ -173,8 +173,8 @@ def get_nearest_close(date, df):
 async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
-    start_day, start_month = data.get("start_date", 0), data.get("start_month", 0)
-    end_day, end_month = data.get("end_date", 0), data.get("end_month", 0)
+    start_day, start_month = data.get("STARTDATE", 0), data.get("STARTMONTH", 0)
+    end_day, end_month = data.get("ENDDATE", 0), data.get("ENDMONTH", 0)
     years_back = 10
 
     end_date = datetime.today()
@@ -220,7 +220,7 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
     if len(ticker_symbols)>1:
         user_id = update.effective_user.id
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
-        Avg = data.get("Average", 0)
+        Avg = data.get("AVERAGE", 0)
         """ # Merge all results into a single DataFrame
         combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
         for symbol in ticker_symbols:
@@ -306,7 +306,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         FNO = data.get("FNO", False)
         Membership = data.get("Membership", False)
-        Avg = data.get("Average", 0)
+        Avg = data.get("AVERAGE", 0)
+        start_day, start_month = data.get("STARTDATE", 0), data.get("STARTMONTH", 0)
+        end_day, end_month = data.get("ENDDATE", 0), data.get("ENDMONTH", 0)
 
         await update.message.reply_text(
             text=(
@@ -316,10 +318,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"💼 *Account ID:* `{user_id}`\n"
             f"🔢 *FNO:* `{FNO}`\n"
             f"🎟️ *Membership:* `{Membership}`\n"
-            f"📊 *Average:* `{Avg}`%\n\n"
+            f"📊 *Average:* `{Avg}`%\n"
+            f"📊 *Start:* `{start_day}, {start_month} (dd,mm)`\n"
+            f"📊 *End:* `{end_day}, {end_month} (dd,mm)\n\n"
             "📌 *Commands to Get Started:*\n"
-            "`/analyze <Stock Name>` – Analyze a stock\n"
-            "`/suggest` – Get stock suggestions\n"
+            "`/start` – To Start the Bot\n"
             "`/help` – See all available commands 🆘\n\n"
             f"🔗 *Invite Link:* `https://t.me/{context.bot.username}?start={user_id}`"),
             parse_mode="Markdown"
@@ -414,7 +417,7 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
                                                 [InlineKeyboardButton("Change Settings",callback_data='setsettings')]
                                             ]))
             return
-        user_ref.update({setting.lower(): int(value)})
+        user_ref.update({setting.upper(): int(value)})
     elif setting in ["ANALYZE", "SUGGESTED"]:
         if setting == "ANALYZE":
             await analysis(value,update,context)
@@ -493,7 +496,8 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"⚠️ Error: {e}")
+                text=f"⚠️ Error: {e}\n"
+                f"Start both with /start command.")
         await client.disconnect()
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -513,11 +517,11 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         FNO = data.get("FNO", False)
         Membership = data.get("Membership", False)
-        Avg = data.get("Average", 0)
-        sd = data.get("start_date", 0)
-        sm = data.get("start_month", 0)
-        ed = data.get("end_date", 0)
-        em = data.get("end_month", 0)
+        Avg = data.get("AVERAGE", 0)
+        sd = data.get("STARTDATE", 0)
+        sm = data.get("STARTMONTH", 0)
+        ed = data.get("ENDDATE", 0)
+        em = data.get("ENDMONTH", 0)
         await context.bot.send_message(chat_id=update.effective_chat.id,
             text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n"
             f"📋 *@{update.effective_user.username if update.effective_user.username else 'No username'}'s Settings. (`{update.effective_user.id}`):*\n\n"
