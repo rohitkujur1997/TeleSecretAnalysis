@@ -329,11 +329,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔗 *Invite Link:* `https://t.me/{context.bot.username}?start={user_id}`"),
             parse_mode="Markdown"
             )
+        """
         await context.bot.send_message(chat_id=chat_id,text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Menu. (`{user_id}`)",
                                             parse_mode="Markdown",
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
-                                            ]))
+                                            ]))"""
+        await mainMenu(update, context) 
     except Exception as e:
         await update.message.reply_text(f"Session error: {e}")
         await client.disconnect()
