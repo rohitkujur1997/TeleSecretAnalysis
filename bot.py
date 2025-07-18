@@ -504,6 +504,8 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
                 chat_id=chat_id,
                 text=f"⚠️ Error: {e}\n"
+                f"⚠️ Error: {e}\n"
+                f"Type: {type(e).__name__}\n"
                 f"Start both with /start command.")
         await client.disconnect()
 
