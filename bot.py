@@ -501,12 +501,24 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
     except Exception as e:
-        await context.bot.send_message(
-                chat_id=chat_id,
-                text=f"⚠️ Error: {e}\n"
-                f"⚠️ Error: {e}\n"
-                f"Type: {type(e).__name__}\n"
-                f"Start both with /start command.")
+        if type(e).__name__ == "ValueError" and e == "Number of rows must be a positive integer, not 0":
+            await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=f"⚠️ Error!!!\n"
+                    f"Fix your Settings\n"
+                    f"Maybe Your Average is too high according to other settings causing no data return.\n"
+                    f"Goto Main Menu then change settings.",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                        ])
+                    )
+        else:
+            await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=f"⚠️ Error: {e}\n"
+                    f"Type: {type(e).__name__}\n"
+                    f"Start both with /start command.")
         await client.disconnect()
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
