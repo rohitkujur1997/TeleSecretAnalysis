@@ -329,9 +329,10 @@ def get_yf_data(ticker, start_date, end_date):
         print(f"[ERROR] Could not fetch data: {e}")
         return None
     
-async def analyze_all_commodities(start_day, start_month, end_day, end_month, years_back, update:Update, context:ContextTypes.DEFAULT_TYPE):
+async def analyze_all_commodities(start_day, start_month, end_day, end_month, update:Update, context:ContextTypes.DEFAULT_TYPE):
     try:
         today = datetime.today()
+        years_back = 10
         start_fetch_date = datetime(today.year - years_back, start_month, start_day)
 
         n = len(COMMODITY_TICKERS)
