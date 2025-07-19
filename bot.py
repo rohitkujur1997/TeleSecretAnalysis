@@ -364,6 +364,7 @@ async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Menu. (`{update.effective_user.id}`)\n"
                                    f"📲 Choose an Option from Main Menu:",
+                                   parse_mode="Markdown",
                                    reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsettings')],
                                                 [InlineKeyboardButton("Suggest All Stock(based on settings)", callback_data='suggest')],
@@ -449,6 +450,7 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
     if not doc.exists:
         set_user_payment(user_id)
         await context.bot.send_message(chat_id=chat_id,text="🔄 User profile created. Please try again.",
+                                       parse_mode="Markdown",
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Change Settings",callback_data='setsettings')]
                                             ]))
@@ -457,6 +459,7 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
     if setting in ["AVERAGE", "STARTDATE", "STARTMONTH", "ENDDATE", "ENDMONTH"]:
         if not value.isnumeric():
             await context.bot.send_message(chat_id=chat_id,text="⚠️ Invalid input: Must be numeric.",
+                                           parse_mode="Markdown",
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Change Settings",callback_data='setsettings')]
                                             ]))
