@@ -31,6 +31,15 @@ cred_dict = json.loads(firebase_json)
 firebase_app = None
 db = None
 
+COMMODITY_TICKERS = {
+    "gold": "GC=F",
+    "silver": "SI=F",
+    "crude oil": "CL=F",
+    "natural gas": "NG=F",
+    "copper": "HG=F",
+    "aluminum": "ALI=F",
+}
+
 
 def init_firebase():
     global firebase_app, db
@@ -310,6 +319,126 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
     # Clean up
     os.remove(suggestionimg)
 
+
+def get_yf_data(ticker, start_date, end_date):
+    try:
+        df = yf.download(ticker, start=start_date, end=end_date, interval="1d", progress=False)
+        df = df[['Close']].dropna()
+        return df
+    except Exception as e:
+        print(f"[ERROR] Could not fetch data: {e}")
+        return None
+    
+async def analyze_all_commodities(start_day, start_month, end_day, end_month, years_back, update:Update, context:ContextTypes.DEFAULT_TYPE):
+    try:
+        today = datetime.today()
+        start_fetch_date = datetime(today.year - years_back, start_month, start_day)
+
+        n = len(COMMODITY_TICKERS)
+        cols = 2
+        rows = (n + 1) // cols
+
+        fig, axs = plt.subplots(rows, cols, figsize=(12, rows * 4))
+        axs = axs.flatten()
+
+        for i, (commodity_name, ticker) in enumerate(COMMODITY_TICKERS.items()):
+            await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Processing {commodity_name.title()}...")
+            df = get_yf_data(ticker, start_fetch_date, today)
+            if df is None or df.empty:
+                await context.bot.send_message(chat_id=update.effective_chat.id,text=f"[ERROR] No data for {commodity_name}")
+                continue
+
+            results = []
+            for year in range(today.year - 1, today.year - years_back - 1, -1):
+                try:
+                    d1 = datetime(year, start_month, start_day)
+                    d2 = datetime(year, end_month, end_day)
+
+                    nearest_d1 = df.index[df.index.get_indexer([d1], method='nearest')[0]]
+                    nearest_d2 = df.index[df.index.get_indexer([d2], method='nearest')[0]]
+
+                    close1 = df.loc[nearest_d1]['Close']
+                    close2 = df.loc[nearest_d2]['Close']
+
+                    pct_change = ((close2 - close1) / close1) * 100
+                    results.append({'Year': year, '% Change': round(pct_change, 2)})
+                except Exception as e:
+                    await context.bot.send_message(chat_id=update.effective_chat.id,text=f"[WARN] Skipping {year} for {commodity_name}: {e}")
+                    continue
+
+            if not results:
+                axs[i].set_title(f"{commodity_name.title()} (No data)")
+                axs[i].axis('off')
+                continue
+
+            results_df = pd.DataFrame(results).sort_values("Year")
+            years = results_df["Year"].astype(str)
+            changes = results_df["% Change"].astype(float)
+            colors = ['green' if x > 0 else 'red' for x in changes]
+
+            axs[i].bar(years, changes, color=colors)
+            axs[i].axhline(0, color='black', linestyle='--', linewidth=0.7)
+            axs[i].set_title(f"{commodity_name.title()} (% Change)")
+            axs[i].set_ylabel("% Change")
+            axs[i].tick_params(axis='x', rotation=45)
+
+        # Hide unused subplots
+        for j in range(i + 1, len(axs)):
+            axs[j].axis('off')
+
+        plt.suptitle(f"Commodity % Change: {start_day}/{start_month} to {end_day}/{end_month} (Last {years_back} Years)", fontsize=14)
+        plt.tight_layout(rect=[0, 0, 1, 0.96])
+        plt.savefig(str(update.effective_chat.id)+"suggestion.png", dpi=300)
+        suggestionimg=str(update.effective_chat.id)+"suggestion.png"
+        logging.info(f"Saved image: {suggestionimg}, Size: {os.path.getsize(suggestionimg)} bytes")
+
+        # Send as media group
+        with open(suggestionimg, 'rb') as f:
+            await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
+        #plt.show()
+        
+        # Clean up
+        os.remove(suggestionimg)
+        await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="✅ *Suggestions have been generated based on your settings.!*",
+                parse_mode="Markdown"
+            )
+        await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Go back to Main Menu.",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ]))
+    except Exception as e:
+        await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Error Occur: {e}\nGo back to Main Menu.",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ]))
+
+async def suggestCom(update:Update, context:ContextTypes.DEFAULT_TYPE):
+    client = TelegramClient(StringSession(), api_id, api_hash)
+    chat_id = update.effective_chat.id
+    user_id = update.effective_user.id
+    await client.connect()
+    doc = db.collection("TeleSecretAnalysis").document(str(user_id)).get()
+    if not doc.exists:
+        set_user_payment(user_id)
+    data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+    Membership = data.get("Membership", False)
+    if Membership:
+        start_day, start_month = data.get("STARTDATE", 0), data.get("STARTMONTH", 0)
+        end_day, end_month = data.get("ENDDATE", 0), data.get("ENDMONTH", 0)
+        await context.bot.send_message(chat_id=chat_id,text="MCX Commodity Analyzer (Multi-Commodity View)\n")
+        await analyze_all_commodities(start_day, start_month, end_day, end_month, update=update, context=context)
+    else:
+        await context.bot.send_message(
+                chat_id=chat_id,
+                text="🔒 Access Denied: Your *membership is inactive*. Please activate it to proceed.",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                    ])
+            )
+
 # Command: /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -367,6 +496,7 @@ async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    parse_mode="Markdown",
                                    reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsettings')],
+                                                [InlineKeyboardButton("Suggest All Commodities(based on settings)", callback_data='suggestCom')],
                                                 [InlineKeyboardButton("Suggest All Stock(based on settings)", callback_data='suggest')],
                                                 [InlineKeyboardButton("Check Suggested Stock(based on settings)", callback_data='set_SUGGESTED')],
                                                 [InlineKeyboardButton("Analyze Yearly Graph", callback_data='ANALYZE'),InlineKeyboardButton("Help", callback_data='help')]
@@ -393,6 +523,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await setsettings(update,context)
     elif query.data == "suggest":
         await suggest(update,context)
+    elif query.data == "suggestCom":
+        await suggestCom(update,context)
     elif query.data == "ANALYZE":
         await analyze(update,context)
     elif query.data == "GOLD":
@@ -711,7 +843,7 @@ async def setup(application):
         #BotCommand("analyze", "Analyze a stock (e.g., /analyze TCS)"),
         #BotCommand("suggest", "Get stock suggestions"),
         #BotCommand("showsettings", "View your current settings"),
-        #BotCommand("setsettings", "Update your settings")
+        #BotCommand("setsettings", "Update your settings")sawathi
     ])
     # Set menu button to show commands
     await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
