@@ -395,16 +395,22 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "ANALYZE":
         await analyze(update,context)
     elif query.data == "GOLD":
+        await context.bot.send_message(chat_id=chat_id,text="Analyzing GOLD...")
         await analysis("GC=F","C",update,context)
     elif query.data == "SILVER":
+        await context.bot.send_message(chat_id=chat_id,text="Analyzing SILVER...")
         await analysis("SI=F","C",update,context)
     elif query.data == "CRUDEOIL":
+        await context.bot.send_message(chat_id=chat_id,text="Analyzing CRUDE OIL...")
         await analysis("CL=F","C",update,context)
     elif query.data == "NATURALGAS":
+        await context.bot.send_message(chat_id=chat_id,text="Analyzing NATURAL GAS...")
         await analysis("NG=F","C",update,context)
     elif query.data == "COPPER":
+        await context.bot.send_message(chat_id=chat_id,text="Analyzing COPPER...")
         await analysis("HG=F","C",update,context)
     elif query.data == "ALUMINUM":
+        await context.bot.send_message(chat_id=chat_id,text="Analyzing ALUMINUM...")
         await analysis("ALI=F","C",update,context)
     elif query.data == 'set_FNO':
         # Toggle FNO directly (example of immediate action)
