@@ -428,7 +428,7 @@ async def suggestCom(update:Update, context:ContextTypes.DEFAULT_TYPE):
         start_day, start_month = data.get("STARTDATE", 0), data.get("STARTMONTH", 0)
         end_day, end_month = data.get("ENDDATE", 0), data.get("ENDMONTH", 0)
         await context.bot.send_message(chat_id=chat_id,text="MCX Commodity Analyzer (Multi-Commodity View)\n")
-        await analyze_all_commodities(start_day, start_month, end_day, end_month, update=update, context=context)
+        await analyze_all_commodities(start_day, start_month, end_day, end_month, update, context)
     else:
         await context.bot.send_message(
                 chat_id=chat_id,
