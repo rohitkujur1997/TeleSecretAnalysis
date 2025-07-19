@@ -76,7 +76,7 @@ def download_monthly_data(ticker, start_year, end_year):
     return yearly_data
 
 
-async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextTypes.DEFAULT_TYPE):
+async def plot_yearly_grid(yearly_data, type, ticker,update:Update,context:ContextTypes.DEFAULT_TYPE):
     num_years = len(yearly_data)
     cols = 3
     rows = math.ceil(num_years / cols)
@@ -117,14 +117,20 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
 
         ax.set_title(f"{ticker} - {year}")
         ax.set_xlabel("Month")
-        ax.set_ylabel("Price (INR)")
+        if type == "C":
+            ax.set_ylabel("Price (USD)")
+        else:
+            ax.set_ylabel("Price (INR)")
         ax.grid(True)
 
     for i in range(len(yearly_data), len(axes)):
         fig.delaxes(axes[i])
 
     plt.tight_layout()
-    filename = f"{ticker}_years_charts.png"
+    if type == "C":
+        filename = f"{ticker.replace('=F','')}_years_charts.png"
+    else:
+        filename = f"{ticker}_years_charts.png"
     plt.savefig(filename, dpi=300, format='png')
     logging.info(f"Saved image: {filename}, Size: {os.path.getsize(filename)} bytes")
 
@@ -138,16 +144,29 @@ async def plot_yearly_grid(yearly_data, ticker,update:Update,context:ContextType
     # Clean up
     os.remove(filename)
 
+async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Analyze Menu. (`{update.effective_user.id}`)\n"
+                                   f"📲 Choose an Option from Main Menu:",
+                                   parse_mode="Markdown",
+                                   reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("GOLD (Commodity)",callback_data='GOLD'),InlineKeyboardButton("SILVER (Commodity)",callback_data='SILVER')],
+                                                [InlineKeyboardButton("CRUDE OIL (Commodity)",callback_data='CRUDEOIL'),InlineKeyboardButton("NATURAL GAS (Commodity)",callback_data='NATURALGAS')],
+                                                [InlineKeyboardButton("COPPER (Commodity)",callback_data='COPPER'),InlineKeyboardButton("ALUMINUM (Commodity)",callback_data='ALUMINUM')],
+                                                [InlineKeyboardButton("Stock (Equity)", callback_data='set_STOCK')],
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ]))
+    return
 
-async def analysis(value,update:Update,context:ContextTypes.DEFAULT_TYPE):
+async def analysis(value,type,update:Update,context:ContextTypes.DEFAULT_TYPE):
     try:
         chat_id = update.effective_chat.id
-        ticker = value+".NS"
+        ticker = value
         current_year = datetime.today().year
         start_year = 1995
 
         yearly_data = download_monthly_data(ticker, start_year, current_year)
-        await plot_yearly_grid(yearly_data, ticker,update,context)    
+        await plot_yearly_grid(yearly_data,type, ticker,update,context)    
         await context.bot.send_message(
             chat_id=chat_id,
             text="✅ *Analysis completed successfully!*",
@@ -349,7 +368,7 @@ async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                                 [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsettings')],
                                                 [InlineKeyboardButton("Suggest All Stock(based on settings)", callback_data='suggest')],
                                                 [InlineKeyboardButton("Check Suggested Stock(based on settings)", callback_data='set_SUGGESTED')],
-                                                [InlineKeyboardButton("Analyze Stock Graph", callback_data='set_ANALYZE'),InlineKeyboardButton("Help", callback_data='help')]
+                                                [InlineKeyboardButton("Analyze Yearly Graph", callback_data='ANALYZE'),InlineKeyboardButton("Help", callback_data='help')]
                                             ]))
     return
 
@@ -373,6 +392,20 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await setsettings(update,context)
     elif query.data == "suggest":
         await suggest(update,context)
+    elif query.data == "ANALYZE":
+        await analyze(update,context)
+    elif query.data == "GOLD":
+        await analysis("GC=F","C",update,context)
+    elif query.data == "SILVER":
+        await analysis("SI=F","C",update,context)
+    elif query.data == "CRUDEOIL":
+        await analysis("CL=F","C",update,context)
+    elif query.data == "NATURALGAS":
+        await analysis("NG=F","C",update,context)
+    elif query.data == "COPPER":
+        await analysis("HG=F","C",update,context)
+    elif query.data == "ALUMINUM":
+        await analysis("ALI=F","C",update,context)
     elif query.data == 'set_FNO':
         # Toggle FNO directly (example of immediate action)
         user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
@@ -423,9 +456,9 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
                                             ]))
             return
         user_ref.update({setting.upper(): int(value)})
-    elif setting in ["ANALYZE", "SUGGESTED"]:
-        if setting == "ANALYZE":
-            await analysis(value,update,context)
+    elif setting in ["STOCK", "SUGGESTED"]:
+        if setting == "STOCK":
+            await analysis(value+".NS","S",update,context)
             return
         if setting == "SUGGESTED":
             await suggested(value,update,context)
