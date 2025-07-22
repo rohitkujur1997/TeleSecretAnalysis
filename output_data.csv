@@ -149,7 +149,6 @@ IPCALAB,IPCA Laboratories Limited,Pharmaceuticals,FALSE
 CUB,City Union Bank Limited,Private Sector Bank,FALSE
 OIL,Oil India Limited,Oil Exploration & Production,TRUE
 MAHABANK,Bank of Maharashtra,Public Sector Bank,FALSE
-COHANCE,Cohance Lifesciences Limited,Pharmaceuticals,FALSE
 KIRLOSBROS,Kirloskar Brothers Limited,Compressors Pumps & Diesel Engines,FALSE
 HINDZINC,Hindustan Zinc Limited,Zinc,TRUE
 EIHOTEL,EIH Limited,Hotels & Resorts,FALSE
@@ -162,7 +161,6 @@ SUNDRMFAST,Sundram Fasteners Limited,Auto Components & Equipments,FALSE
 MAZDOCK,Mazagon Dock Shipbuilders Limited,Ship Building & Allied Services,TRUE
 ASHOKLEY,Ashok Leyland Limited,Commercial Vehicles,TRUE
 LAURUSLABS,Laurus Labs Limited,Pharmaceuticals,TRUE
-HBLENGINE,HBL Engineering Limited,Other Industrial Products,FALSE
 MMTC,MMTC Limited,Trading & Distributors,FALSE
 ENDURANCE,Endurance Technologies Limited,Auto Components & Equipments,FALSE
 CYIENT,Cyient Limited,IT Enabled Services,TRUE
@@ -415,116 +413,37 @@ DYNAMATECH,Dynamatic Technologies Limited,Industrial Products,FALSE
 HAL,Hindustan Aeronautics Limited,Aerospace & Defense,TRUE
 MIDHANI,Mishra Dhatu Nigam Limited,Aerospace & Defense,FALSE
 LTIM,LTIMindtree Limited,Computers - Software & Consulting,TRUE
-NIFTY IPO,,,FALSE
-SAMBHV,Sambhv Steel Tubes Limited,Iron & Steel Products,FALSE
-SWIGGY,Swiggy Limited,E-Retail/ E-Commerce,FALSE
-QPOWER,Quality Power Electrical Equipments Limited,Heavy Electrical Equipment,FALSE
-GODAVARIB,Godavari Biorefineries Limited,Diversified FMCG,FALSE
 EMCURE,Emcure Pharmaceuticals Limited,Pharmaceuticals,FALSE
-IGCL,Indogulf Cropsciences Limited,Pesticides & Agrochemicals,FALSE
-UNIMECH,Unimech Aerospace and Manufacturing Limited,Aerospace & Defense,FALSE
-INTERARCH,Interarch Building Solutions Limited,Civil Construction,FALSE
-BALAJEE,Shree Tirupati Balajee Agro Trading Company Limited,Packaging,FALSE
 TBOTEK,TBO Tek Limited,Tour Travel Related Services,FALSE
 ABDL,Allied Blenders and Distillers Limited,Breweries & Distilleries,FALSE
 KRYSTAL,Krystal Integrated Services Limited,Diversified Commercial Services,FALSE
-KRN,KRN Heat Exchanger and Refrigeration Limited,Other Industrial Products,FALSE
-OSWALPUMPS,Oswal Pumps Limited,Compressors Pumps & Diesel Engines,FALSE
-AFCONS,Afcons Infrastructure Limited,Civil Construction,FALSE
 PVSL,Popular Vehicles and Services Limited,Auto Dealer,FALSE
-GLOBECIVIL,Globe Civil Projects Limited,Civil Construction,FALSE
-TRAVELFOOD,Travel Food Services Limited,Restaurants,FALSE
-KALPATARU,Kalpataru Limited,Residential Commercial Projects,FALSE
-VMM,Vishal Mega Mart Limited,Diversified Retail,FALSE
-STALLION,Stallion India Fluorochemicals Limited,Industrial Gases,FALSE
-BELRISE,Belrise Industries Limited,Auto Components & Equipments,FALSE
-ARKADE,Arkade Developers Limited,Residential Commercial Projects,FALSE
-AGARWALEYE,Dr. Agarwal's Health Care Limited,Hospital,FALSE
 IXIGO,Le Travenues Technology Limited,Tour Travel Related Services,FALSE
-TRANSRAILL,Transrail Lighting Limited,Heavy Electrical Equipment,FALSE
 RPTECH,Rashi Peripherals Limited,Computers Hardware & Equipments,FALSE
-UNIECOM,Unicommerce Esolutions Limited,Software Products,FALSE
-WAAREEENER,Waaree Energies Limited,Other Electrical Equipment,FALSE
-WCIL,Western Carriers (India) Limited,Logistics Solution Provider,FALSE
-SCODATUBES,Scoda Tubes Limited,Iron & Steel Products,FALSE
-DAMCAPITAL,Dam Capital Advisors Limited,Stockbroking & Allied,FALSE
 JUNIPER,Juniper Hotels Limited,Hotels & Resorts,FALSE
-GARUDA,Garuda Construction and Engineering Limited,Civil Construction,FALSE
 GPTHEALTH,GPT Healthcare Limited,Hospital,FALSE
-HEXT,Hexaware Technologies Limited,Computers - Software & Consulting,FALSE
-BLACKBUCK,Zinka Logistics Solutions Limited,Transport Related Services,FALSE
 DEEDEV,DEE Development Engineers Limited,Industrial Products,FALSE
 AADHARHFC,Aadhar Housing Finance Limited,Housing Finance Company,FALSE
-HDBFS,HDB Financial Services Limited,Non Banking Financial Company (NBFC),FALSE
-MOBIKWIK,One Mobikwik Systems Limited,Financial Technology (Fintech),FALSE
-KROSS,Kross Limited,Auto Components & Equipments,FALSE
-TOLINS,Tolins Tyres Limited,Tyres & Rubber Products,FALSE
-DIFFNKG,Diffusion Engineers Limited,Other Industrial Products,FALSE
-SAILIFE,Sai Life Sciences Limited,Pharmaceuticals,FALSE
-SENORES,Senores Pharmaceuticals Limited,Pharmaceuticals,FALSE
-MANBA,Manba Finance Limited,Non Banking Financial Company (NBFC),FALSE
-VENTIVE,Ventive Hospitality Limited,Hotels & Resorts,FALSE
-CEWATER,Concord Enviro Systems Limited,Waste Management,FALSE
-BAJAJHFL,Bajaj Housing Finance Limited,Housing Finance Company,FALSE
-ATHERENERG,Ather Energy Limited,2/3 Wheelers,FALSE
-NIVABUPA,Niva Bupa Health Insurance Company Limited,General Insurance,FALSE
-ARISINFRA,Arisinfra Solutions Limited,Other Construction Materials,FALSE
-ORIENTTECH,Orient Technologies Limited,IT Enabled Services,FALSE
 GODIGIT,Go Digit General Insurance Limited,General Insurance,FALSE
-CEIGALL,Ceigall India Limited,Civil Construction,FALSE
 STANLEY,Stanley Lifestyles Limited,Furniture Home Furnishing,FALSE
-SANSTAR,Sanstar Limited,Other Agricultural Products,FALSE
-AJAXENGG,Ajax Engineering Limited,Construction Vehicles,FALSE
 ENTERO,Entero Healthcare Solutions Limited,Pharmacy Retail,FALSE
 RKSWAMY,R K Swamy Limited,Advertising & Media Agencies,FALSE
-PREMIERENE,Premier Energies Limited,Other Electrical Equipment,FALSE
-SAGILITY,Sagility India Limited,IT Enabled Services,FALSE
-IGIL,International Gemmological Institute (India) Limited,Diversified Commercial Services,FALSE
 MUKKA,Mukka Proteins Limited,Animal Feed,FALSE
 GOPAL,Gopal Snacks Limited,Packaged Foods,FALSE
-DBEIL,Deepak Builders & Engineers India Limited,Civil Construction,FALSE
-GALAPREC,Gala Precision Engineering Limited,Industrial Products,FALSE
-SURAKSHA,Suraksha Diagnostic Limited,Healthcare Service Provider,FALSE
 AFIL,Akme Fintrade (India) Limited,Non Banking Financial Company (NBFC),FALSE
-SSDL,Saraswati Saree Depot Limited,Garments & Apparels,FALSE
-ACMESOLAR,Acme Solar Holdings Limited,Power Generation,FALSE
 VRAJ,Vraj Iron and Steel Limited,Sponge Iron,FALSE
 PLATIND,Platinum Industries Limited,Specialty Chemicals,FALSE
-NORTHARC,Northern Arc Capital Limited,Non Banking Financial Company (NBFC),FALSE
-SANATHAN,Sanathan Textiles Limited,Other Textile Products,FALSE
 BHARTIHEXA,Bharti Hexacom Limited,Telecom - Cellular & Fixed line services,FALSE
-CRIZAC,Crizac Limited,Internet & Catalogue Retail,FALSE
-PNGJL,P N Gadgil Jewellers Limited,Gems Jewellery And Watches,FALSE
-HYUNDAI,Hyundai Motor India Limited,Passenger Cars & Utility Vehicles,FALSE
-IKS,Inventurus Knowledge Solutions Limited,IT Enabled Services,FALSE
-CARRARO,Carraro India Limited,Auto Components & Equipments,FALSE
-FIRSTCRY,Brainbees Solutions Limited,E-Retail/ E-Commerce,FALSE
-STYLEBAAZA,Baazar Style Retail Limited,Speciality Retail,FALSE
-NTPCGREEN,NTPC Green Energy Limited,Power Generation,FALSE
 EXICOM,Exicom Tele-Systems Limited,Heavy Electrical Equipment,FALSE
 AWFIS,Awfis Space Solutions Limited,Diversified Commercial Services,FALSE
 JSFB,Jana Small Finance Bank Limited,Other Bank,FALSE
-AKUMS,Akums Drugs and Pharmaceuticals Limited,Pharmaceuticals,FALSE
-DENTA,Denta Water and Infra Solutions Limited,Water Supply & Management,FALSE
-OLAELEC,Ola Electric Mobility Limited,2/3 Wheelers,FALSE
-MAMATA,Mamata Machinery Limited,Industrial Products,FALSE
 JGCHEM,J.G.Chemicals Limited,Commodity Chemicals,FALSE
-EIEL,Enviro Infra Engineers Limited,Water Supply & Management,FALSE
 CAPITALSFB,Capital Small Finance Bank Limited,Other Bank,FALSE
-ECOSMOBLTY,Ecos (India) Mobility & Hospitality Limited,Road Transport,FALSE
-THELEELA,Schloss Bangalore Limited,Hotels & Resorts,FALSE
 INDGN,Indegene Limited,Healthcare Research Analytics & Technology,FALSE
 JNKINDIA,JNK India Limited,Industrial Products,FALSE
-ELLEN,Ellenbarrie Industrial Gases Limited,Industrial Gases,FALSE
 KRONOX,Kronox Lab Sciences Limited,Specialty Chemicals,FALSE
-SGLTL,Standard Glass Lining Technology Limited,Industrial Products,FALSE
 BANSALWIRE,Bansal Wire Industries Limited,Iron & Steel Products,FALSE
 VSTL,Vibhor Steel Tubes Limited,Iron & Steel Products,FALSE
-LAXMIDENTL,Laxmi Dental Limited,Medical Equipment & Supplies,FALSE
-AEGISVOPAK,Aegis Vopak Terminals Limited,Oil Storage & Transportation,FALSE
-PROSTARM,Prostarm Info Systems Limited,Other Electrical Equipment,FALSE
-INDOFARM,Indo Farm Equipment Limited,Tractors,FALSE
-QUADFUTURE,Quadrant Future Tek Limited,Cables - Electricals,FALSE
 DBCORP,D.B.Corp Limited,Print Media,FALSE
 TIPSMUSIC,Tips Music Limited,Media & Entertainment,FALSE
 HATHWAY,Hathway Cable & Datacom Limited,TV Broadcasting & Software Production,FALSE
