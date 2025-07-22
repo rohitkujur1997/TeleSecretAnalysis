@@ -759,16 +759,18 @@ async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
                 reader = csv.reader(csvfile)
                 next(reader)  # Skip header (row 1)
                 for row in reader:
-                    if value.upper() in row[0]:
-                        await context.bot.send_message(
-                            chat_id=chat_id,
-                            text=(
-                                f"🏢 *Company Name:* `{row[1]}`\n"
-                                f"🏭 *Industry:* `{row[2]}`"
-                            ),
-                            parse_mode="Markdown"
-                        )
-            ticker_symbols = [value+".NS"]
+                    for v in value:
+                        if v.upper() in row[0]:
+                            await context.bot.send_message(
+                                chat_id=chat_id,
+                                text=(
+                                    f"🏢 *Company Name:* `{row[1]}`\n"
+                                    f"🏭 *Industry:* `{row[2]}`"
+                                ),
+                                parse_mode="Markdown"
+                            )
+            ListVal = value.split(",")
+            ticker_symbols = [ListVal+".NS"]
                 #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
             await suggestion(ticker_symbols,update,context)
             await context.bot.send_message(
