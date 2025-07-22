@@ -755,11 +755,12 @@ async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
             chat_id = update.effective_chat.id
             user_id = update.effective_user.id
             await client.connect()
+            ListVal = value.split(",")
             with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 next(reader)  # Skip header (row 1)
                 for row in reader:
-                    for v in value:
+                    for v in ListVal:
                         if v.upper() in row[0]:
                             await context.bot.send_message(
                                 chat_id=chat_id,
@@ -769,8 +770,7 @@ async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
                                 ),
                                 parse_mode="Markdown"
                             )
-            ListVal = value.split(",")
-            ticker_symbols = [ListVal+".NS"]
+            ticker_symbols = [v+'.NS' for v in ListVal]
                 #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
             await suggestion(ticker_symbols,update,context)
             await context.bot.send_message(
