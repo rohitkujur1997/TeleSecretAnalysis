@@ -195,64 +195,93 @@ async def analysis(value,start_year,type,update:Update,context:ContextTypes.DEFA
         
 async def analysisbargraph(ticker_symbols, start_year, update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    end_date = datetime.today()
-    end_year = end_date.year
+    data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+    start_day, start_month = data.get("STARTDATE", 0), data.get("STARTMONTH", 0)
+    end_day, end_month = data.get("ENDDATE", 0), data.get("ENDMONTH", 0)
+    years_back = 10
 
-    # Plot config
+    end_date = datetime.today()
+    start_date = end_date.replace(year=end_date.year - years_back)
+    # Store all results for plotting
+    all_results = {}
+
+    for ticker_symbol in ticker_symbols:
+        try:
+            ticker = yf.Ticker(ticker_symbol)
+            df = ticker.history(start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'), interval="1d")
+            df.index = pd.to_datetime(df.index).tz_localize(None)
+            df = df[['Close']]
+
+            results = []
+
+            for year in range(end_date.year - years_back, end_date.year + 1):
+                for month in range(1, 13):
+                    try:
+                        first_day = datetime(year, month, 1)
+                        last_day = (first_day.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+
+                        close1 = get_nearest_close(first_day, df)
+                        close2 = get_nearest_close(last_day, df)
+
+                        if close1 and close2:
+                            pct = ((close2 - close1) / close1) * 100
+                            results.append({
+                                "Year": year,
+                                "Month": calendar.month_abbr[month],
+                                "% Change": round(pct, 2)
+                            })
+                    except Exception as e:
+                        continue
+
+            all_results[ticker_symbol] = pd.DataFrame(results)
+        except Exception as e:
+            await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}",
+                                                    reply_markup=InlineKeyboardMarkup([
+                                                        [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                                    ]))
+            continue
+
+    # Plotting
     num_tickers = len(ticker_symbols)
-    cols = 2
-    rows = math.ceil(num_tickers / cols)
-    fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 4 * rows))
-    axes = axes.flatten()
+    cols = 1  # One chart per ticker for clarity
+    rows = num_tickers
+    fig, axes = plt.subplots(rows, cols, figsize=(14, 5 * rows))
+    if num_tickers == 1:
+        axes = [axes]
 
     for i, symbol in enumerate(ticker_symbols):
-        try:
-            ax = axes[i]
-            data_by_year = download_monthly_data(symbol, start_year, end_year)
+        ax = axes[i]
+        df_temp = all_results[symbol]
+        df_temp['Period'] = df_temp['Year'].astype(str) + '-' + df_temp['Month']
 
-            months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-            bar_width = 0.08
-            x = np.arange(len(months))
+        changes = df_temp['% Change']
+        colors = ['green' if val > 0 else 'red' for val in changes]
 
-            # Plot each year's bars offset from the base
-            for idx, (year, df) in enumerate(sorted(data_by_year.items())):
-                if df.empty:
-                    continue
-                y = df['Close'].values
-                offset = (idx - len(data_by_year) / 2) * bar_width
-                ax.bar(x + offset, y, width=bar_width, label=str(year))
+        bars = ax.bar(df_temp['Period'], changes, color=colors)
+        ax.set_title(f"{symbol}: Monthly % Change Over {years_back} Years", fontsize=12)
+        ax.set_ylabel("% Change")
+        ax.set_xlabel("Year-Month")
+        ax.axhline(0, color='black', linestyle='--', linewidth=0.8)
+        ax.tick_params(axis='x', rotation=45)
+        for bar, value in zip(bars, changes):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2, height,
+                    f"{value:.2f}%", ha='center', va='bottom' if height > 0 else 'top', fontsize=7)
 
-            ax.set_xticks(x)
-            ax.set_xticklabels(months)
-            ax.set_title(symbol)
-            ax.set_xlabel("Month")
-            ax.set_ylabel("Close Price")
-            ax.legend(fontsize=7, title="Year", loc='upper left', bbox_to_anchor=(1.01, 1))
-            ax.grid(axis='y', linestyle='--', alpha=0.5)
-        except Exception as e:
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text=f"Skipped {symbol} due to error: {e}",
-                                           reply_markup=InlineKeyboardMarkup([
-                                               [InlineKeyboardButton("Main Menu", callback_data='mainMenu')]
-                                           ]))
-
-    for j in range(i + 1, len(axes)):
-        fig.delaxes(axes[j])
-
-    fig.suptitle("Monthly Close Prices - Last 10 Years", fontsize=14)
+    # Final layout adjustments
+    fig.suptitle(f"% Change from {start_day}/{start_month} to {end_day}/{end_month} (Last {years_back} Years)", fontsize=14)
     plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.savefig(str(update.effective_chat.id)+"suggestion.png", dpi=300)
+    suggestionimg=str(update.effective_chat.id)+"suggestion.png"
+    logging.info(f"Saved image: {suggestionimg}, Size: {os.path.getsize(suggestionimg)} bytes")
 
-    filename = f"{update.effective_chat.id}_monthly_trends.png"
-    plt.savefig(filename, dpi=300)
-    plt.close()
-
-    # Send the image
-    with open(filename, 'rb') as f:
+    # Send as media group
+    with open(suggestionimg, 'rb') as f:
         await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
-
-    logging.info(f"Saved image: {filename}, Size: {os.path.getsize(filename)} bytes")
-    os.remove(filename)
+    #plt.show()
+    
+    # Clean up
+    os.remove(suggestionimg)
 
 def get_nearest_close(date, df):
     while date not in df.index and date >= df.index.min():
