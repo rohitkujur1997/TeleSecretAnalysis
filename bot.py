@@ -195,7 +195,7 @@ async def plot_yearly_grid(yearly_data, type, ticker,update:Update,context:Conte
 def calculate_yearly_percent_change(yearly_data):
     """
     Converts monthly data into yearly percent change.
-    
+
     Parameters:
         yearly_data (dict): {year: DataFrame with monthly data}
 
@@ -205,12 +205,19 @@ def calculate_yearly_percent_change(yearly_data):
     results = []
     for year, df in yearly_data.items():
         df_sorted = df.sort_values('Month')
-        if df_sorted.empty:
+        
+        # Defensive check: make sure 'Close' column has data
+        if df_sorted.empty or 'Close' not in df_sorted.columns or df_sorted['Close'].isna().all():
             continue
+
         start_price = df_sorted['Close'].iloc[0]
         end_price = df_sorted['Close'].iloc[-1]
-        percent_change = ((end_price - start_price) / start_price) * 100
-        results.append({'Year': year, '% Change': round(percent_change, 2)})
+
+        # Only process if both values are valid numbers
+        if pd.notna(start_price) and pd.notna(end_price) and start_price != 0:
+            percent_change = ((end_price - start_price) / start_price) * 100
+            results.append({'Year': year, '% Change': round(percent_change, 2)})
+
     return pd.DataFrame(results)
 
 
