@@ -192,6 +192,56 @@ async def analysis(value,start_year,type,update:Update,context:ContextTypes.DEFA
                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
             ])
             )
+        
+async def analysisbargraph(ticker_symbols, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    end_date = datetime.today()
+    start_year = end_date.year - 10
+    end_year = end_date.year
+
+    # Plot config
+    num_tickers = len(ticker_symbols)
+    cols = 2
+    rows = math.ceil(num_tickers / cols)
+    fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 4 * rows))
+    axes = axes.flatten()
+
+    for i, symbol in enumerate(ticker_symbols):
+        try:
+            data_by_year = download_monthly_data(symbol, start_year, end_year)
+            ax = axes[i]
+
+            for year, df in data_by_year.items():
+                ax.plot(df['Month'], df['Close'], label=str(year), marker='o')
+
+            ax.set_title(symbol)
+            ax.set_xlabel("Month")
+            ax.set_ylabel("Close Price")
+            ax.grid(True, linestyle='--', alpha=0.5)
+            ax.legend(fontsize=8)
+        except Exception as e:
+            await context.bot.send_message(chat_id=update.effective_chat.id,
+                                           text=f"Skipped {symbol} due to error: {e}",
+                                           reply_markup=InlineKeyboardMarkup([
+                                               [InlineKeyboardButton("Main Menu", callback_data='mainMenu')]
+                                           ]))
+
+    for j in range(i + 1, len(axes)):
+        fig.delaxes(axes[j])
+
+    fig.suptitle("Monthly Close Prices - Last 10 Years", fontsize=14)
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+
+    filename = f"{update.effective_chat.id}_monthly_trends.png"
+    plt.savefig(filename, dpi=300)
+    plt.close()
+
+    # Send the image
+    with open(filename, 'rb') as f:
+        await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
+
+    logging.info(f"Saved image: {filename}, Size: {os.path.getsize(filename)} bytes")
+    os.remove(filename)
 
 def get_nearest_close(date, df):
     while date not in df.index and date >= df.index.min():
@@ -611,6 +661,7 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
                 v=value.split()
                 if len(v)==2:
                     await analysis(v[0]+".NS",int(v[1]),"S",update,context)
+                    #await analysisbargraph(v[0]+".NS",int(v[1]),"S",update,context)
                 else:
                     await context.bot.send_message(
                         chat_id=chat_id,
