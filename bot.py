@@ -195,7 +195,7 @@ async def plot_yearly_grid(yearly_data, type, ticker,update:Update,context:Conte
 def calculate_yearly_percent_change(yearly_data):
     """
     Converts monthly data into yearly percent change.
-
+    
     Parameters:
         yearly_data (dict): {year: DataFrame with monthly data}
 
@@ -205,19 +205,12 @@ def calculate_yearly_percent_change(yearly_data):
     results = []
     for year, df in yearly_data.items():
         df_sorted = df.sort_values('Month')
-        
-        # Defensive check: make sure 'Close' column has data
-        if df_sorted.empty or 'Close' not in df_sorted.columns or df_sorted['Close'].isna().all():
+        if df_sorted.empty:
             continue
-
         start_price = df_sorted['Close'].iloc[0]
         end_price = df_sorted['Close'].iloc[-1]
-
-        # Only process if both values are valid numbers
-        if pd.notna(start_price) and pd.notna(end_price) and start_price != 0:
-            percent_change = ((end_price - start_price) / start_price) * 100
-            results.append({'Year': year, '% Change': round(percent_change, 2)})
-
+        percent_change = ((end_price - start_price) / start_price) * 100
+        results.append({'Year': year, '% Change': round(percent_change, 2)})
     return pd.DataFrame(results)
 
 
@@ -240,9 +233,14 @@ async def plot_annual_changes_from_yearly_data(update:Update, context:ContextTyp
         ax = axes[i]
         yearly_data = all_yearly_data[symbol]
         df_temp = calculate_yearly_percent_change(yearly_data)
+        # Skip if DataFrame is empty
+        if df_temp.empty or '% Change' not in df_temp.columns:
+            continue
 
         years = df_temp['Year'].astype(str)
         changes = df_temp['% Change']
+        # Handle NaN safely
+        changes = changes.fillna(0)
         colors = ['green' if val > 0 else 'red' for val in changes]
 
         bars = ax.bar(years, changes, color=colors)
