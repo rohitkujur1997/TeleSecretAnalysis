@@ -207,17 +207,29 @@ async def analysisbargraph(ticker_symbols, start_year, update: Update, context: 
 
     for i, symbol in enumerate(ticker_symbols):
         try:
-            data_by_year = download_monthly_data(symbol, start_year, end_year)
             ax = axes[i]
+            data_by_year = download_monthly_data(symbol, start_year, end_year)
 
-            for year, df in data_by_year.items():
-                ax.plot(df['Month'], df['Close'], label=str(year), marker='o')
+            months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            bar_width = 0.08
+            x = np.arange(len(months))
 
+            # Plot each year's bars offset from the base
+            for idx, (year, df) in enumerate(sorted(data_by_year.items())):
+                if df.empty:
+                    continue
+                y = df['Close'].values
+                offset = (idx - len(data_by_year) / 2) * bar_width
+                ax.bar(x + offset, y, width=bar_width, label=str(year))
+
+            ax.set_xticks(x)
+            ax.set_xticklabels(months)
             ax.set_title(symbol)
             ax.set_xlabel("Month")
             ax.set_ylabel("Close Price")
-            ax.grid(True, linestyle='--', alpha=0.5)
-            ax.legend(fontsize=8)
+            ax.legend(fontsize=7, title="Year", loc='upper left', bbox_to_anchor=(1.01, 1))
+            ax.grid(axis='y', linestyle='--', alpha=0.5)
         except Exception as e:
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text=f"Skipped {symbol} due to error: {e}",
