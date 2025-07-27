@@ -167,12 +167,12 @@ async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                             ]))
     return
 
-async def analysis(value,type,update:Update,context:ContextTypes.DEFAULT_TYPE):
+async def analysis(value,start_year,type,update:Update,context:ContextTypes.DEFAULT_TYPE):
     try:
         chat_id = update.effective_chat.id
         ticker = value
         current_year = datetime.today().year
-        start_year = 1995
+        #start_year = 1995
 
         yearly_data = download_monthly_data(ticker, start_year, current_year)
         await plot_yearly_grid(yearly_data,type, ticker,update,context)    
@@ -530,22 +530,22 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await analyze(update,context)
     elif query.data == "GOLD":
         await context.bot.send_message(chat_id=chat_id,text="Analyzing GOLD...")
-        await analysis("GC=F","C",update,context)
+        await analysis("GC=F",1995,"C",update,context)
     elif query.data == "SILVER":
         await context.bot.send_message(chat_id=chat_id,text="Analyzing SILVER...")
-        await analysis("SI=F","C",update,context)
+        await analysis("SI=F",1995,"C",update,context)
     elif query.data == "CRUDEOIL":
         await context.bot.send_message(chat_id=chat_id,text="Analyzing CRUDE OIL...")
-        await analysis("CL=F","C",update,context)
+        await analysis("CL=F",1995,"C",update,context)
     elif query.data == "NATURALGAS":
         await context.bot.send_message(chat_id=chat_id,text="Analyzing NATURAL GAS...")
-        await analysis("NG=F","C",update,context)
+        await analysis("NG=F",1995,"C",update,context)
     elif query.data == "COPPER":
         await context.bot.send_message(chat_id=chat_id,text="Analyzing COPPER...")
-        await analysis("HG=F","C",update,context)
+        await analysis("HG=F",1995,"C",update,context)
     elif query.data == "ALUMINUM":
         await context.bot.send_message(chat_id=chat_id,text="Analyzing ALUMINUM...")
-        await analysis("ALI=F","C",update,context)
+        await analysis("ALI=F",1995,"C",update,context)
     elif query.data == 'set_FNO':
         # Toggle FNO directly (example of immediate action)
         user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
@@ -600,7 +600,8 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
         user_ref.update({setting.upper(): int(value)})
     elif setting in ["STOCK", "SUGGESTED"]:
         if setting == "STOCK":
-            await analysis(value+".NS","S",update,context)
+            v=value.split()
+            await analysis(v[0]+".NS",int(v[1]),"S",update,context)
             return
         if setting == "SUGGESTED":
             await suggested(value,update,context)

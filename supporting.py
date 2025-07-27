@@ -24,11 +24,12 @@ def callme2(data,j):
 
     for item in data["data"]:
         meta = item.get("meta", {})
+        
         listing_date_str = meta.get("listingDate", item.get("listingDate", None))
         symbol_str = meta.get("symbol", item.get("symbol"))
         
         try:
-            if listing_date_str:
+            """ if listing_date_str:
                 listing_date = datetime.strptime(listing_date_str, "%Y-%m-%d")
                 if listing_date <= cutoff_date and symbol_str not in remov:
                     entry = {
@@ -37,7 +38,14 @@ def callme2(data,j):
                         "industry": meta.get("industry", "N/A"),
                         "isFNOSec": meta.get("isFNOSec", item.get("isFNOSec", False))
                     }
-                    results.append(entry)
+                    results.append(entry) """
+            entry = {
+                        "symbol": meta.get("symbol", item.get("symbol")),
+                        "companyName": meta.get("companyName", "N/A"),
+                        "industry": meta.get("industry", "N/A"),
+                        "isFNOSec": meta.get("isFNOSec", item.get("isFNOSec", False))
+                    }
+            results.append(entry)
         except ValueError:
             # Skip rows with invalid date format
             continue
@@ -54,7 +62,8 @@ def callme2(data,j):
     else:
         print("No matching data found.")
 
-ilist = [
+ilist= ["NIFTY IT"]
+""" ilist = [
     "NIFTY 50",
     "NIFTY NEXT 50",
     "NIFTY BANK",
@@ -126,7 +135,7 @@ ilist = [
     "NIFTY TRANSPORTATION & LOGISTICS",
     "NIFTY50 SHARIAH",
     "NIFTY500 SHARIAH"
-    ]
+    ] """
 for i in ilist:
     data = callme1(i+".json")
     #j=i.replace(".json",".csv")
