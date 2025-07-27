@@ -84,6 +84,45 @@ def download_monthly_data(ticker, start_year, end_year):
 
     return yearly_data
 
+def download_monthly_databargraph(ticker, start_year, end_year):
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    yearly_data = {}
+
+    for year in range(start_year, end_year + 1):
+        start = f"{year}-01-01"
+        end = datetime.today().strftime('%Y-%m-%d') if year == end_year else f"{year}-12-31"
+
+        # Download daily data (not monthly) to get first and last trading days of each month
+        df = yf.download(ticker, start=start, end=end, interval='1d', progress=False)
+        if df.empty:
+            continue
+
+        df['Year'] = df.index.year
+        df['Month'] = df.index.month
+
+        # Group by month to get first and last closing prices
+        monthly_changes = []
+        for month in sorted(df['Month'].unique()):
+            month_df = df[df['Month'] == month]
+            first_close = month_df['Close'].iloc[0]
+            last_close = month_df['Close'].iloc[-1]
+            percent_change = ((last_close - first_close) / first_close) * 100
+
+            monthly_changes.append({
+                'Month': months[month - 1],  # Get month abbreviation
+                'Percent Change': round(percent_change, 2)
+            })
+
+        # Convert to DataFrame and store
+        monthly_df = pd.DataFrame(monthly_changes)
+        monthly_df['Month'] = pd.Categorical(monthly_df['Month'], categories=months, ordered=True)
+        monthly_df.sort_values('Month', inplace=True)
+        yearly_data[year] = monthly_df
+
+    return yearly_data
+
+
 
 async def plot_yearly_grid(yearly_data, type, ticker,update:Update,context:ContextTypes.DEFAULT_TYPE):
     num_years = len(yearly_data)
@@ -153,6 +192,89 @@ async def plot_yearly_grid(yearly_data, type, ticker,update:Update,context:Conte
     # Clean up
     os.remove(filename)
 
+def calculate_yearly_percent_change(yearly_data):
+    """
+    Converts monthly data into yearly percent change.
+    
+    Parameters:
+        yearly_data (dict): {year: DataFrame with monthly data}
+
+    Returns:
+        DataFrame: with columns ['Year', '% Change']
+    """
+    results = []
+    for year, df in yearly_data.items():
+        df_sorted = df.sort_values('Month')
+        if df_sorted.empty:
+            continue
+        start_price = df_sorted['Close'].iloc[0]
+        end_price = df_sorted['Close'].iloc[-1]
+        percent_change = ((end_price - start_price) / start_price) * 100
+        results.append({'Year': year, '% Change': round(percent_change, 2)})
+    return pd.DataFrame(results)
+
+
+async def plot_annual_changes_from_yearly_data(update:Update, context:ContextTypes.DEFAULT_TYPE, all_yearly_data, ticker_symbols, cols=2, figsize=(12, 6)):
+    """
+    Plots annual % change for each ticker based on yearly_data dict.
+
+    Parameters:
+        all_yearly_data (dict): {ticker: yearly_data}
+        ticker_symbols (list): list of ticker symbols
+        cols (int): number of subplot columns
+        figsize (tuple): overall figure size
+    """
+    rows = (len(ticker_symbols) + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
+    axes = axes.flatten()
+    msg=""
+
+    for i, symbol in enumerate(ticker_symbols):
+        ax = axes[i]
+        yearly_data = all_yearly_data[symbol]
+        df_temp = calculate_yearly_percent_change(yearly_data)
+
+        years = df_temp['Year'].astype(str)
+        changes = df_temp['% Change']
+        colors = ['green' if val > 0 else 'red' for val in changes]
+
+        bars = ax.bar(years, changes, color=colors)
+
+        # Annotate bars
+        for bar, value in zip(bars, changes):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width() / 2, height,
+                    f"{value:.2f}%", ha='center',
+                    va='bottom' if height > 0 else 'top',
+                    fontsize=8)
+
+        ax.axhline(0, color='black', linestyle='--', linewidth=0.8)
+        ax.set_title(symbol)
+        ax.set_xlabel("Year")
+        ax.grid(axis='y', linestyle='--', alpha=0.5)
+
+        if i % cols == 0:
+            ax.set_ylabel("% Change")
+
+    # Hide any unused axes
+    for j in range(i + 1, len(axes)):
+        fig.delaxes(axes[j])
+
+    filename = f"{ticker_symbols[0]}_years_charts.png"
+    plt.savefig(filename, dpi=300, format='png')
+    logging.info(f"Saved image: {filename}, Size: {os.path.getsize(filename)} bytes")
+
+    # Send as media group
+    with open(filename, 'rb') as f:
+        await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
+
+    # Optional message
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+
+    # Clean up
+    os.remove(filename)
+
+
 async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id,
                                    text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Analyze Menu. (`{update.effective_user.id}`)\n"
@@ -194,94 +316,28 @@ async def analysis(value,start_year,type,update:Update,context:ContextTypes.DEFA
             )
         
 async def analysisbargraph(ticker_symbols, start_year, update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
-    start_day, start_month = data.get("STARTDATE", 0), data.get("STARTMONTH", 0)
-    end_day, end_month = data.get("ENDDATE", 0), data.get("ENDMONTH", 0)
-    years_back = 10
+    try:
+        chat_id = update.effective_chat.id
+        ticker = ticker_symbols
+        all_yearly_data = {ticker: download_monthly_data(ticker, start_year, 2024)}
+        await plot_annual_changes_from_yearly_data(update,context,all_yearly_data, ticker, cols=2)
+        await context.bot.send_message(
+                chat_id=chat_id,
+                text="✅ *Analysis completed successfully!*",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                ])
+            )
+    except Exception as ex:
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=f"⚠️ Error: {ex}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+            ])
+            )
 
-    end_date = datetime.today()
-    start_date = end_date.replace(year=end_date.year - years_back)
-    # Store all results for plotting
-    all_results = {}
-
-    for ticker_symbol in ticker_symbols:
-        try:
-            ticker = yf.Ticker(ticker_symbol)
-            df = ticker.history(start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'), interval="1d")
-            df.index = pd.to_datetime(df.index).tz_localize(None)
-            df = df[['Close']]
-
-            results = []
-
-            for year in range(end_date.year - years_back, end_date.year + 1):
-                for month in range(1, 13):
-                    try:
-                        first_day = datetime(year, month, 1)
-                        last_day = (first_day.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
-
-                        close1 = get_nearest_close(first_day, df)
-                        close2 = get_nearest_close(last_day, df)
-
-                        if close1 and close2:
-                            pct = ((close2 - close1) / close1) * 100
-                            results.append({
-                                "Year": year,
-                                "Month": calendar.month_abbr[month],
-                                "% Change": round(pct, 2)
-                            })
-                    except Exception as e:
-                        continue
-
-            all_results[ticker_symbol] = pd.DataFrame(results)
-        except Exception as e:
-            await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}",
-                                                    reply_markup=InlineKeyboardMarkup([
-                                                        [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
-                                                    ]))
-            continue
-
-    # Plotting
-    num_tickers = len(ticker_symbols)
-    cols = 1  # One chart per ticker for clarity
-    rows = num_tickers
-    fig, axes = plt.subplots(rows, cols, figsize=(14, 5 * rows))
-    if num_tickers == 1:
-        axes = [axes]
-
-    for i, symbol in enumerate(ticker_symbols):
-        ax = axes[i]
-        df_temp = all_results[symbol]
-        df_temp['Period'] = df_temp['Year'].astype(str) + '-' + df_temp['Month']
-
-        changes = df_temp['% Change']
-        colors = ['green' if val > 0 else 'red' for val in changes]
-
-        bars = ax.bar(df_temp['Period'], changes, color=colors)
-        ax.set_title(f"{symbol}: Monthly % Change Over {years_back} Years", fontsize=12)
-        ax.set_ylabel("% Change")
-        ax.set_xlabel("Year-Month")
-        ax.axhline(0, color='black', linestyle='--', linewidth=0.8)
-        ax.tick_params(axis='x', rotation=45)
-        for bar, value in zip(bars, changes):
-            height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2, height,
-                    f"{value:.2f}%", ha='center', va='bottom' if height > 0 else 'top', fontsize=7)
-
-    # Final layout adjustments
-    fig.suptitle(f"% Change from {start_day}/{start_month} to {end_day}/{end_month} (Last {years_back} Years)", fontsize=14)
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.savefig(str(update.effective_chat.id)+"suggestion.png", dpi=300)
-    suggestionimg=str(update.effective_chat.id)+"suggestion.png"
-    logging.info(f"Saved image: {suggestionimg}, Size: {os.path.getsize(suggestionimg)} bytes")
-
-    # Send as media group
-    with open(suggestionimg, 'rb') as f:
-        await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
-    #plt.show()
-    
-    # Clean up
-    os.remove(suggestionimg)
 
 def get_nearest_close(date, df):
     while date not in df.index and date >= df.index.min():
