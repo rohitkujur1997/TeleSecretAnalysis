@@ -241,11 +241,18 @@ async def plot_annual_changes_from_yearly_data(update, context, all_yearly_data,
         bars = ax.bar(years, changes, color=colors)
 
         for bar, value in zip(bars, changes):
-            height = float(bar.get_height())
-            ax.text(bar.get_x() + bar.get_width() / 2, height,
-                    f"{value:.2f}%", ha='center',
-                    va='bottom' if height > 0 else 'top',
-                    fontsize=8)
+            height = bar.get_height()
+            try:
+                height_val = float(height)
+            except Exception:
+                height_val = 0
+
+            va = 'bottom'
+            if height_val <= 0:
+                va = 'top'
+
+            ax.text(bar.get_x() + bar.get_width() / 2, height_val,
+                    f"{value:.2f}%", ha='center', va=va, fontsize=8)
 
         ax.axhline(0, color='black', linestyle='--', linewidth=0.8)
         ax.set_title(symbol)
