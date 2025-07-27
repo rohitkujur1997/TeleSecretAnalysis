@@ -673,11 +673,12 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
                             ])
                         )
                 return
-            except:
+            except Exception as e:
                 await context.bot.send_message(
                         chat_id=chat_id,
                         text=f"⚠️ Error!!!\n"
                         f"Looks like u have entered invalid 'Start year' after STOCK NAME.\n"
+                        f"Error msg: {e}\n"
                         f"Eg. `BHEL 2021`",
                         parse_mode="Markdown",
                         reply_markup=InlineKeyboardMarkup([
