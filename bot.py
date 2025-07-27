@@ -238,16 +238,13 @@ async def plot_annual_changes_from_yearly_data(update:Update, context:ContextTyp
             continue
 
         years = df_temp['Year'].astype(str)
-        changes = df_temp['% Change']
-        # Handle NaN safely
-        changes = changes.fillna(0)
-        colors = ['green' if val > 0 else 'red' for val in changes]
+        changes = pd.to_numeric(df_temp['% Change'], errors='coerce').fillna(0)
 
+        colors = ['green' if val > 0 else 'red' for val in changes]
         bars = ax.bar(years, changes, color=colors)
 
-        # Annotate bars
         for bar, value in zip(bars, changes):
-            height = bar.get_height()
+            height = float(bar.get_height())  # Explicitly cast to float
             ax.text(bar.get_x() + bar.get_width() / 2, height,
                     f"{value:.2f}%", ha='center',
                     va='bottom' if height > 0 else 'top',
