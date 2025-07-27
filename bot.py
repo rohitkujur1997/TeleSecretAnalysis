@@ -347,7 +347,7 @@ async def analysisbargraph(ticker_symbols, start_year, update: Update, context: 
         await context.bot.send_message(
                 chat_id=chat_id,
                 text="✅ *Analysis completed successfully!*")
-        await plot_annual_changes_from_yearly_data(update,context,all_yearly_data, tickers, cols=2)
+        await plot_annual_changes_grouped_by_year(update,context,all_yearly_data, tickers, cols=2)
         await context.bot.send_message(
                 chat_id=chat_id,
                 text="✅ *Analysis completed successfully!*",
