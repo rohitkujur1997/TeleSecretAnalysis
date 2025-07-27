@@ -234,8 +234,8 @@ async def plot_annual_changes_from_yearly_data(update:Update, context:ContextTyp
         yearly_data = all_yearly_data[symbol]
         df_temp = calculate_yearly_percent_change(yearly_data)
         # Skip if DataFrame is empty
-        if df_temp.empty or '% Change' not in df_temp.columns:
-            continue
+        """ if df_temp.empty or '% Change' not in df_temp.columns:
+            continue """
 
         years = df_temp['Year'].astype(str)
         changes = pd.to_numeric(df_temp['% Change'], errors='coerce').fillna(0)
