@@ -219,63 +219,75 @@ def calculate_yearly_percent_change(yearly_data):
 
 
 # Async function for Telegram bot
-async def plot_annual_changes_from_yearly_data(update, context, all_yearly_data, ticker_symbols, cols=2, figsize=(12, 6)):
-    rows = (len(ticker_symbols) + cols - 1) // cols
+async def plot_annual_changes_grouped_by_year(update, context, all_yearly_data, ticker_symbols, cols=2, figsize=(12, 6)):
+    # Step 1: Aggregate yearly % changes by year across all tickers
+    yearly_results = {}  # {year: {ticker: %change}}
+
+    for ticker in ticker_symbols:
+        yearly_data = all_yearly_data.get(ticker, {})
+        df_temp = calculate_yearly_percent_change(yearly_data)
+
+        for _, row in df_temp.iterrows():
+            year = row['Year']
+            change = row['% Change']
+
+            if year not in yearly_results:
+                yearly_results[year] = {}
+            yearly_results[year][ticker] = change
+
+    if not yearly_results:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="No valid data to plot.")
+        return
+
+    # Step 2: Prepare subplot layout
+    years_sorted = sorted(yearly_results.keys())
+    rows = (len(years_sorted) + cols - 1) // cols
     fig, axes = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
     axes = axes.flatten()
 
-    for i, symbol in enumerate(ticker_symbols):
+    # Step 3: Plot each year’s data
+    for i, year in enumerate(years_sorted):
         ax = axes[i]
-        yearly_data = all_yearly_data.get(symbol, {})
-        df_temp = calculate_yearly_percent_change(yearly_data)
+        data = yearly_results[year]
 
-        if df_temp.empty or '% Change' not in df_temp.columns:
-            ax.set_title(f"{symbol} (no data)")
-            ax.axis('off')
-            continue
-
-        years = df_temp['Year'].astype(str)
-        changes = pd.to_numeric(df_temp['% Change'], errors='coerce').fillna(0)
-
+        tickers = list(data.keys())
+        changes = [data[t] for t in tickers]
         colors = ['green' if val > 0 else 'red' for val in changes]
-        bars = ax.bar(years, changes, color=colors)
+
+        bars = ax.bar(tickers, changes, color=colors)
 
         for bar, value in zip(bars, changes):
             height = bar.get_height()
             try:
-                height_val = float(height)
+                height_val = float(height.item() if hasattr(height, "item") else height)
             except Exception:
                 height_val = 0
 
-            va = 'bottom'
-            if height_val <= 0:
-                va = 'top'
-
+            va = 'bottom' if height_val > 0 else 'top'
             ax.text(bar.get_x() + bar.get_width() / 2, height_val,
                     f"{value:.2f}%", ha='center', va=va, fontsize=8)
 
         ax.axhline(0, color='black', linestyle='--', linewidth=0.8)
-        ax.set_title(symbol)
-        ax.set_xlabel("Year")
-        ax.grid(axis='y', linestyle='--', alpha=0.5)
+        ax.set_title(f"Year: {year}")
+        ax.set_xlabel("Ticker")
         if i % cols == 0:
             ax.set_ylabel("% Change")
+        ax.grid(axis='y', linestyle='--', alpha=0.5)
 
-    # Remove any unused axes
+    # Step 4: Remove unused axes
     for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])
 
-    # Save plot
-    filename = f"{ticker_symbols[0]}_years_chart.png"
+    # Step 5: Save and send
+    filename = f"yearly_change_grouped_by_year.png"
     plt.savefig(filename, dpi=300, format='png')
-    plt.close(fig)  # Close to free memory
+    plt.close(fig)
     logging.info(f"Saved image: {filename}, Size: {os.path.getsize(filename)} bytes")
 
-    # Send file via Telegram
     with open(filename, 'rb') as f:
         await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
 
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="📈 Yearly % Change Chart")
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="📊 Yearly % Change by Ticker")
 
     os.remove(filename)
 
