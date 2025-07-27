@@ -257,15 +257,26 @@ async def plot_annual_changes_grouped_by_year(update, context, all_yearly_data, 
         bars = ax.bar(tickers, changes, color=colors)
 
         for bar, value in zip(bars, changes):
-            height = bar.get_height()
             try:
-                height_val = float(height.item() if hasattr(height, "item") else height)
+                # Convert height to plain Python float
+                height_raw = bar.get_height()
+                if hasattr(height_raw, "item"):  # numpy scalar
+                    height = float(height_raw.item())
+                else:
+                    height = float(height_raw)
             except Exception:
-                height_val = 0
+                height = 0.0
 
-            va = 'bottom' if height_val > 0 else 'top'
-            ax.text(bar.get_x() + bar.get_width() / 2, height_val,
-                    f"{value:.2f}%", ha='center', va=va, fontsize=8)
+            va = 'bottom' if height > 0 else 'top'
+
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                height,
+                f"{value:.2f}%",
+                ha='center',
+                va=va,
+                fontsize=8
+            )
 
         ax.axhline(0, color='black', linestyle='--', linewidth=0.8)
         ax.set_title(f"Year: {year}")
