@@ -193,10 +193,9 @@ async def analysis(value,start_year,type,update:Update,context:ContextTypes.DEFA
             ])
             )
         
-async def analysisbargraph(ticker_symbols, update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def analysisbargraph(ticker_symbols, start_year, update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     end_date = datetime.today()
-    start_year = end_date.year - 10
     end_year = end_date.year
 
     # Plot config
@@ -661,7 +660,7 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
                 v=value.split()
                 if len(v)==2:
                     await analysis(v[0]+".NS",int(v[1]),"S",update,context)
-                    #await analysisbargraph(v[0]+".NS",int(v[1]),"S",update,context)
+                    await analysisbargraph(v[0]+".NS",int(v[1]),"S",update,context)
                 else:
                     await context.bot.send_message(
                         chat_id=chat_id,
