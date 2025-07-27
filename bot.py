@@ -318,12 +318,18 @@ async def analysis(value,start_year,type,update:Update,context:ContextTypes.DEFA
 async def analysisbargraph(ticker_symbols, start_year, update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chat_id = update.effective_chat.id
-        ticker = list(ticker_symbols)
-        all_yearly_data = {ticker: download_monthly_data(ticker, start_year, 2024)}
+        tickers = list(ticker_symbols)
+        await context.bot.send_message(
+                chat_id=chat_id,
+                text=f"{tickers}")
+        all_yearly_data = {ticker: download_monthly_data(ticker, start_year, 2024) for ticker in tickers}
+        await context.bot.send_message(
+                chat_id=chat_id,
+                text=f"{all_yearly_data}")
         await context.bot.send_message(
                 chat_id=chat_id,
                 text="✅ *Analysis completed successfully!*")
-        await plot_annual_changes_from_yearly_data(update,context,all_yearly_data, ticker, cols=2)
+        await plot_annual_changes_from_yearly_data(update,context,all_yearly_data, tickers, cols=2)
         await context.bot.send_message(
                 chat_id=chat_id,
                 text="✅ *Analysis completed successfully!*",
