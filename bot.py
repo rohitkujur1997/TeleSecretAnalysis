@@ -600,9 +600,33 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
         user_ref.update({setting.upper(): int(value)})
     elif setting in ["STOCK", "SUGGESTED"]:
         if setting == "STOCK":
-            v=value.split()
-            await analysis(v[0]+".NS",int(v[1]),"S",update,context)
-            return
+            try:
+                v=value.split()
+                if len(v)==2:
+                    await analysis(v[0]+".NS",int(v[1]),"S",update,context)
+                else:
+                    await context.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"⚠️ Error!!!\n"
+                        f"Looks like u have not entered 'Start year' after STOCK NAME.\n"
+                        f"Eg. `BHEL 2021`",
+                        parse_mode="Markdown",
+                        reply_markup=InlineKeyboardMarkup([
+                            [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                            ])
+                        )
+                return
+            except:
+                await context.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"⚠️ Error!!!\n"
+                        f"Looks like u have entered invalid 'Start year' after STOCK NAME.\n"
+                        f"Eg. `BHEL 2021`",
+                        parse_mode="Markdown",
+                        reply_markup=InlineKeyboardMarkup([
+                            [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                            ])
+                        )
         if setting == "SUGGESTED":
             await suggested(value,update,context)
             return
