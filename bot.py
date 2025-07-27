@@ -192,50 +192,47 @@ async def plot_yearly_grid(yearly_data, type, ticker,update:Update,context:Conte
     # Clean up
     os.remove(filename)
 
-def calculate_yearly_percent_change(yearly_data):
-    """
-    Converts monthly data into yearly percent change.
-    
-    Parameters:
-        yearly_data (dict): {year: DataFrame with monthly data}
 
-    Returns:
-        DataFrame: with columns ['Year', '% Change']
-    """
+# Make sure this version of calculate_yearly_percent_change is used
+def calculate_yearly_percent_change(yearly_data):
     results = []
+
     for year, df in yearly_data.items():
+        df = df.copy()
+        df.index = pd.to_datetime(df.index)
+
+        # Filter strictly to current year
+        df = df[df.index.year == year]
         df_sorted = df.sort_values('Month')
-        if df_sorted.empty:
+
+        if df_sorted.empty or 'Close' not in df_sorted.columns:
             continue
+
         start_price = df_sorted['Close'].iloc[0]
         end_price = df_sorted['Close'].iloc[-1]
-        percent_change = ((end_price - start_price) / start_price) * 100
-        results.append({'Year': year, '% Change': round(percent_change, 2)})
+
+        if pd.notna(start_price) and pd.notna(end_price) and start_price != 0:
+            percent_change = ((end_price - start_price) / start_price) * 100
+            results.append({'Year': year, '% Change': round(percent_change, 2)})
+
     return pd.DataFrame(results)
 
 
-async def plot_annual_changes_from_yearly_data(update:Update, context:ContextTypes.DEFAULT_TYPE, all_yearly_data, ticker_symbols, cols=2, figsize=(12, 6)):
-    """
-    Plots annual % change for each ticker based on yearly_data dict.
-
-    Parameters:
-        all_yearly_data (dict): {ticker: yearly_data}
-        ticker_symbols (list): list of ticker symbols
-        cols (int): number of subplot columns
-        figsize (tuple): overall figure size
-    """
+# Async function for Telegram bot
+async def plot_annual_changes_from_yearly_data(update, context, all_yearly_data, ticker_symbols, cols=2, figsize=(12, 6)):
     rows = (len(ticker_symbols) + cols - 1) // cols
     fig, axes = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
     axes = axes.flatten()
-    msg=""
 
     for i, symbol in enumerate(ticker_symbols):
         ax = axes[i]
-        yearly_data = all_yearly_data[symbol]
+        yearly_data = all_yearly_data.get(symbol, {})
         df_temp = calculate_yearly_percent_change(yearly_data)
-        # Skip if DataFrame is empty
-        """ if df_temp.empty or '% Change' not in df_temp.columns:
-            continue """
+
+        if df_temp.empty or '% Change' not in df_temp.columns:
+            ax.set_title(f"{symbol} (no data)")
+            ax.axis('off')
+            continue
 
         years = df_temp['Year'].astype(str)
         changes = pd.to_numeric(df_temp['% Change'], errors='coerce').fillna(0)
@@ -244,7 +241,7 @@ async def plot_annual_changes_from_yearly_data(update:Update, context:ContextTyp
         bars = ax.bar(years, changes, color=colors)
 
         for bar, value in zip(bars, changes):
-            height = float(bar.get_height())  # Explicitly cast to float
+            height = float(bar.get_height())
             ax.text(bar.get_x() + bar.get_width() / 2, height,
                     f"{value:.2f}%", ha='center',
                     va='bottom' if height > 0 else 'top',
@@ -254,27 +251,27 @@ async def plot_annual_changes_from_yearly_data(update:Update, context:ContextTyp
         ax.set_title(symbol)
         ax.set_xlabel("Year")
         ax.grid(axis='y', linestyle='--', alpha=0.5)
-
         if i % cols == 0:
             ax.set_ylabel("% Change")
 
-    # Hide any unused axes
+    # Remove any unused axes
     for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])
 
-    filename = f"{ticker_symbols[0]}_years_charts.png"
+    # Save plot
+    filename = f"{ticker_symbols[0]}_years_chart.png"
     plt.savefig(filename, dpi=300, format='png')
+    plt.close(fig)  # Close to free memory
     logging.info(f"Saved image: {filename}, Size: {os.path.getsize(filename)} bytes")
 
-    # Send as media group
+    # Send file via Telegram
     with open(filename, 'rb') as f:
         await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
 
-    # Optional message
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="📈 Yearly % Change Chart")
 
-    # Clean up
     os.remove(filename)
+
 
 
 async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
