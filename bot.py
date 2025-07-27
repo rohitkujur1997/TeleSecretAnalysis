@@ -567,7 +567,14 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         # Ask for value input in next message
         context.user_data["pending_setting"] = query.data.replace("set_", "")
-        await context.bot.send_message(chat_id=chat_id,text=f"📝 Please send the value for *{context.user_data['pending_setting']}*:", parse_mode="Markdown")
+        pending_setting = context.user_data['pending_setting']
+
+        # Base message
+        text = f"📝 Please send the value for *{pending_setting}*:"
+        # Add extra info if the setting is STOCK
+        if pending_setting == "STOCK":
+            text += " (also add year separated with space)"
+        await context.bot.send_message(chat_id=chat_id,text=text, parse_mode="Markdown")
             
 async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if "pending_setting" not in context.user_data:
