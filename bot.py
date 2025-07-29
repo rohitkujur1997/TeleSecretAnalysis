@@ -513,7 +513,7 @@ def get_yf_data(ticker, start_date, end_date):
         print(f"[ERROR] Could not fetch data: {e}")
         return None
     
-async def analyze_all_commodities(start_day, start_month, end_day, end_month, update:Update, context:ContextTypes.DEFAULT_TYPE):
+""" async def analyze_all_commodities(start_day, start_month, end_day, end_month, update:Update, context:ContextTypes.DEFAULT_TYPE):
     try:
         today = datetime.today()
         years_back = 10
@@ -622,7 +622,7 @@ async def suggestCom(update:Update, context:ContextTypes.DEFAULT_TYPE):
                 reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                     ])
-            )
+            ) """
 
 # Command: /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -681,10 +681,22 @@ async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    parse_mode="Markdown",
                                    reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsettings')],
-                                                [InlineKeyboardButton("📊 Suggest All Commodities(based on settings)", callback_data='suggestCom')],
-                                                [InlineKeyboardButton("📊 Suggest All Stock\n🗓 1995–2024 (fixed dates)\n⚙️ Based on settings", callback_data='suggest')],
-                                                [InlineKeyboardButton("📊 Check Suggested Stock(based on settings)", callback_data='set_SUGGESTED')],
+                                                #[InlineKeyboardButton("📊 Suggest All Commodities(based on settings)", callback_data='suggestCom')],
+                                                [InlineKeyboardButton(f"📊 Suggest From StockList\n🗓 1995–2024\n⚙️ Based on settings", callback_data='suggest')],
+                                                [InlineKeyboardButton("📊 Check Specific Stock (based on settings)", callback_data='checksuggested')],
                                                 [InlineKeyboardButton("📈 Analyze Yearly Graph", callback_data='ANALYZE'),InlineKeyboardButton("Help", callback_data='help')]
+                                            ]))
+    return
+
+async def specificStock(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Menu. (`{update.effective_user.id}`)\n"
+                                   f"📲 Check Specific Stock 📊 Bar chart (⚙️ based on settings):",
+                                   parse_mode="Markdown",
+                                   reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("🗓 ListedYear-2024 (between setting dates)", callback_data='set_SUGGESTED')],                                                
+                                                [InlineKeyboardButton("🗓 ListedYear-2024 (Each Month % change)", callback_data='set_SUGGESTED')],
+                                                [InlineKeyboardButton("Main Menu", callback_data='mainMenu')]
                                             ]))
     return
 
@@ -708,28 +720,30 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await setsettings(update,context)
     elif query.data == "suggest":
         await suggest(update,context)
-    elif query.data == "suggestCom":
-        await suggestCom(update,context)
+    elif query.data == "checksuggested":
+        await specificStock(update,context)
+    #elif query.data == "suggestCom":
+    #    await suggestCom(update,context)
     elif query.data == "ANALYZE":
         await analyze(update,context)
-    elif query.data == "GOLD":
-        await context.bot.send_message(chat_id=chat_id,text="Analyzing GOLD...")
-        await analysis("GC=F",1995,"C",update,context)
-    elif query.data == "SILVER":
-        await context.bot.send_message(chat_id=chat_id,text="Analyzing SILVER...")
-        await analysis("SI=F",1995,"C",update,context)
-    elif query.data == "CRUDEOIL":
-        await context.bot.send_message(chat_id=chat_id,text="Analyzing CRUDE OIL...")
-        await analysis("CL=F",1995,"C",update,context)
-    elif query.data == "NATURALGAS":
-        await context.bot.send_message(chat_id=chat_id,text="Analyzing NATURAL GAS...")
-        await analysis("NG=F",1995,"C",update,context)
-    elif query.data == "COPPER":
-        await context.bot.send_message(chat_id=chat_id,text="Analyzing COPPER...")
-        await analysis("HG=F",1995,"C",update,context)
-    elif query.data == "ALUMINUM":
-        await context.bot.send_message(chat_id=chat_id,text="Analyzing ALUMINUM...")
-        await analysis("ALI=F",1995,"C",update,context)
+    #elif query.data == "GOLD":
+    #    await context.bot.send_message(chat_id=chat_id,text="Analyzing GOLD...")
+    #    await analysis("GC=F",1995,"C",update,context)
+    #elif query.data == "SILVER":
+    #    await context.bot.send_message(chat_id=chat_id,text="Analyzing SILVER...")
+    #    await analysis("SI=F",1995,"C",update,context)
+    #elif query.data == "CRUDEOIL":
+    #    await context.bot.send_message(chat_id=chat_id,text="Analyzing CRUDE OIL...")
+    #    await analysis("CL=F",1995,"C",update,context)
+    #elif query.data == "NATURALGAS":
+    #    await context.bot.send_message(chat_id=chat_id,text="Analyzing NATURAL GAS...")
+    #    await analysis("NG=F",1995,"C",update,context)
+    #elif query.data == "COPPER":
+    #    await context.bot.send_message(chat_id=chat_id,text="Analyzing COPPER...")
+    #    await analysis("HG=F",1995,"C",update,context)
+    #elif query.data == "ALUMINUM":
+    #    await context.bot.send_message(chat_id=chat_id,text="Analyzing ALUMINUM...")
+    #    await analysis("ALI=F",1995,"C",update,context)
     elif query.data == 'set_FNO':
         await context.bot.send_message(chat_id=chat_id,text="Select anyone option:",
                                             reply_markup=InlineKeyboardMarkup([
