@@ -1072,6 +1072,7 @@ async def membership(update: Update, context: ContextTypes.DEFAULT_TYPE):
             Membership = data.get("Membership", False)
             user_ref.update({"Membership": not Membership})
         await update.message.reply_text(f"Membership status changed")
+        await context.bot.send_message(chat_id=user_id,text=f"Membership status changed")
     except Exception as e:
             await update.message.reply_text(f"⚠️ Error: Member not exist")
 
