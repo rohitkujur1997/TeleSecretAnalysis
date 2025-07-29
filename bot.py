@@ -383,72 +383,80 @@ def get_nearest_close(date, df):
     return df.loc[date]['Close'] if date in df.index else None
 
 async def checkyearly(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    ticker_symbol = ticker_symbols[0]
-    ticker = yf.Ticker(ticker_symbol)
+    try:
+        user_id = update.effective_user.id
+        ticker_symbol = ticker_symbols[0]
+        ticker = yf.Ticker(ticker_symbol)
 
-    # Download full 10-year daily data (2014 to 2023)
-    data = ticker.history(start="2015-01-01", end="2024-12-31", interval="1d")
-    data.index = pd.to_datetime(data.index)
+        # Download full 10-year daily data (2014 to 2023)
+        data = ticker.history(start="2015-01-01", end="2024-12-31", interval="1d")
+        data.index = pd.to_datetime(data.index)
 
-    # Prepare figure: 5 rows x 2 columns for 10 years
-    fig, axes = plt.subplots(5, 2, figsize=(15, 20))
-    axes = axes.flatten()
+        # Prepare figure: 5 rows x 2 columns for 10 years
+        fig, axes = plt.subplots(5, 2, figsize=(15, 20))
+        axes = axes.flatten()
 
-    # Loop through each year and create a subplot
-    for i, year in enumerate(range(2015, 2025)):
-        yearly_data = data[data.index.year == year]
+        # Loop through each year and create a subplot
+        for i, year in enumerate(range(2015, 2025)):
+            yearly_data = data[data.index.year == year]
 
 
-        if yearly_data.empty:
-            continue  # Skip if no data available for the year
+            if yearly_data.empty:
+                continue  # Skip if no data available for the year
 
-        # Resample to monthly stats
-        monthly_high = yearly_data['High'].resample('M').max()
-        monthly_low = yearly_data['Low'].resample('M').min()
-        monthly_open = yearly_data['Open'].resample('M').first()
-        monthly_close = yearly_data['Close'].resample('M').last()
+            # Resample to monthly stats
+            monthly_high = yearly_data['High'].resample('M').max()
+            monthly_low = yearly_data['Low'].resample('M').min()
+            monthly_open = yearly_data['Open'].resample('M').first()
+            monthly_close = yearly_data['Close'].resample('M').last()
 
-        # Calculate percentage difference between high and low
-        percent_diff = ((monthly_high - monthly_low) / monthly_low) * 100
+            # Calculate percentage difference between high and low
+            percent_diff = ((monthly_high - monthly_low) / monthly_low) * 100
 
-        # Determine if month is positive (Close > Open)
-        positive_months = monthly_close > monthly_open
-        colors = ['green' if pos else 'red' for pos in positive_months]
+            # Determine if month is positive (Close > Open)
+            positive_months = monthly_close > monthly_open
+            colors = ['green' if pos else 'red' for pos in positive_months]
 
-        # Month labels (Jan, Feb, ...)
-        month_labels = percent_diff.index.strftime('%b')
+            # Month labels (Jan, Feb, ...)
+            month_labels = percent_diff.index.strftime('%b')
 
-        # Plot on subplot
-        ax = axes[i]
-        bars = ax.bar(month_labels, percent_diff, color=colors)
+            # Plot on subplot
+            ax = axes[i]
+            bars = ax.bar(month_labels, percent_diff, color=colors)
 
-        # Annotate each bar with the % value
-        for bar, value in zip(bars, percent_diff):
-            if pd.notna(value):
-                ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1,
-                        f'{value:.1f}%', ha='center', va='bottom', fontsize=8)
+            # Annotate each bar with the % value
+            for bar, value in zip(bars, percent_diff):
+                if pd.notna(value):
+                    ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1,
+                            f'{value:.1f}%', ha='center', va='bottom', fontsize=8)
 
-        ax.set_title(f'{year}', fontsize=10)
-        ax.set_ylabel('% Diff')
-        ax.set_xlabel('Month')
-        ax.set_ylim(0, percent_diff.max() * 1.1)  # Optional: uniform scale
-        ax.grid(True, linestyle='--', alpha=0.3)
+            ax.set_title(f'{year}', fontsize=10)
+            ax.set_ylabel('% Diff')
+            ax.set_xlabel('Month')
+            ax.set_ylim(0, percent_diff.max() * 1.1)  # Optional: uniform scale
+            ax.grid(True, linestyle='--', alpha=0.3)
 
-    # Final layout tweaks
-    plt.suptitle(f'Monthly High-Low % Difference (2015–2024) - {ticker_symbol}', fontsize=16)
-    plt.tight_layout(rect=[0, 0, 1, 0.97])
-    plt.savefig(str(user_id)+"yearlymonthly.png", dpi=300)
-    suggestionimg=str(user_id)+"yearlymonthly.png"
-    logging.info(f"Saved image: {suggestionimg}, Size: {os.path.getsize(suggestionimg)} bytes")
+        # Final layout tweaks
+        plt.suptitle(f'Monthly High-Low % Difference (2015–2024) - {ticker_symbol}', fontsize=16)
+        plt.tight_layout(rect=[0, 0, 1, 0.97])
+        plt.savefig(str(user_id)+"yearlymonthly.png", dpi=300)
+        suggestionimg=str(user_id)+"yearlymonthly.png"
+        logging.info(f"Saved image: {suggestionimg}, Size: {os.path.getsize(suggestionimg)} bytes")
 
-    # Send as media group
-    with open(suggestionimg, 'rb') as f:
-        await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
-    #plt.show()
-    
-    # Clean up
-    os.remove(suggestionimg)
+        # Send as media group
+        with open(suggestionimg, 'rb') as f:
+            await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
+        #plt.show()
+        
+        # Clean up
+        os.remove(suggestionimg)
+    except Exception as e:
+        await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbols} due to error: {e}",
+                                                reply_markup=InlineKeyboardMarkup([
+                                                    [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                                ]))
+        return
+
 
 async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -763,7 +771,7 @@ async def specificStock(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    parse_mode="Markdown",
                                    reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("🗓 ListedYear-2024 (between setting dates)", callback_data='set_SUGGESTED')],                                                
-                                                [InlineKeyboardButton("🗓 ListedYear-2024 (Each Month % change)", callback_data='checkyearly')],
+                                                [InlineKeyboardButton("🗓 ListedYear-2024 (Each Month % change)", callback_data='set_checkyearly')],
                                                 [InlineKeyboardButton("Main Menu", callback_data='mainMenu')]
                                             ]))
     return
@@ -790,8 +798,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await suggest(update,context)
     elif query.data == "checksuggested":
         await specificStock(update,context)
-    elif query.data == "checkyearly":
-        await checkyearly(["bhel.NS"],update,context)
     #elif query.data == "suggestCom":
     #    await suggestCom(update,context)
     elif query.data == "ANALYZE":
@@ -881,7 +887,7 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
                                             ]))
             return
         user_ref.update({setting.upper(): int(value)})
-    elif setting in ["STOCK", "SUGGESTED"]:
+    elif setting in ["STOCK", "SUGGESTED","checkyearly"]:
         if setting == "STOCK":
             try:
                 v=value.split()
@@ -914,6 +920,9 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
                         )
         if setting == "SUGGESTED":
             await suggested(value,update,context)
+            return
+        if setting =="checkyearly":
+            await checkyearly([value+".NS"],update,context)
             return
     else:
         await context.bot.send_message(chat_id=chat_id,text="⚠️ Invalid setting.",
