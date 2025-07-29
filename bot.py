@@ -902,7 +902,7 @@ async def handle_setting_value(update: Update, context: ContextTypes.DEFAULT_TYP
                 v=value.split()
                 if len(v)==2:
                     await analysis(v[0]+".NS",int(v[1]),"S",update,context)
-                    await analysisbargraph(v[0]+".NS",int(v[1]),update,context)
+                    #await analysisbargraph(v[0]+".NS",int(v[1]),update,context)
                 else:
                     await context.bot.send_message(
                         chat_id=chat_id,
