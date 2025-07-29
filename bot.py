@@ -388,7 +388,7 @@ async def checkyearly(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_
     ticker = yf.Ticker(ticker_symbol)
 
     # Download full 10-year daily data (2014 to 2023)
-    data = ticker.history(start="2014-01-01", end="2024-12-31", interval="1d")
+    data = ticker.history(start="2014-01-01", end="2025-12-31", interval="1d")
     data.index = pd.to_datetime(data.index)
 
     # Prepare figure: 5 rows x 2 columns for 10 years
@@ -396,7 +396,7 @@ async def checkyearly(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_
     axes = axes.flatten()
 
     # Loop through each year and create a subplot
-    for i, year in enumerate(range(2014, 2024)):
+    for i, year in enumerate(range(2015, 2025)):
         yearly_data = data[data.index.year == year]
 
 
@@ -436,7 +436,7 @@ async def checkyearly(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_
         ax.grid(True, linestyle='--', alpha=0.3)
 
     # Final layout tweaks
-    plt.suptitle(f'Monthly High-Low % Difference (2014–2024) - {ticker_symbol}', fontsize=16)
+    plt.suptitle(f'Monthly High-Low % Difference (2015–2024) - {ticker_symbol}', fontsize=16)
     plt.tight_layout(rect=[0, 0, 1, 0.97])
     plt.savefig(str(user_id)+"yearlymonthly.png", dpi=300)
     suggestionimg=str(user_id)+"yearlymonthly.png"
