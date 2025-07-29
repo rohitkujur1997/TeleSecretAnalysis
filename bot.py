@@ -382,6 +382,127 @@ def get_nearest_close(date, df):
         date -= timedelta(days=1)
     return df.loc[date]['Close'] if date in df.index else None
 
+async def checkyearly(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+    start_day, start_month = data.get("STARTDATE", 0), data.get("STARTMONTH", 0)
+    end_day, end_month = data.get("ENDDATE", 0), data.get("ENDMONTH", 0)
+    years_back = 10
+
+    end_date = datetime.today()
+    start_date = end_date.replace(year=end_date.year - years_back)
+    # Store all results for plotting
+    all_results = {}
+
+    for ticker_symbol in ticker_symbols:
+        try:
+            ticker = yf.Ticker(ticker_symbol)
+            df = ticker.history(start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'), interval="1d")
+            df.index = pd.to_datetime(df.index).tz_localize(None)
+            df = df[['Close']]
+
+            results = []
+            for year in range(end_date.year - 1, end_date.year - years_back - 1, -1):
+                try:
+                    d1 = datetime(year, start_month, start_day)
+                    d2 = datetime(year, end_month, end_day)
+                    close1 = get_nearest_close(d1, df)
+                    close2 = get_nearest_close(d2, df)
+                    if close1 and close2:
+                        pct = ((close2 - close1) / close1) * 100
+                        results.append({
+                            "Year": year,
+                            "% Change": round(pct, 2)
+                        })
+                except Exception as e:
+                    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                                   text=f"Skipped {ticker_symbol} {year} due to error: {e}",
+                                                    reply_markup=InlineKeyboardMarkup([
+                                                        [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                                    ]))
+                    continue
+
+            all_results[ticker_symbol] = pd.DataFrame(results).sort_values('Year')
+        except Exception as e:
+            await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}",
+                                                    reply_markup=InlineKeyboardMarkup([
+                                                        [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                                    ]))
+            continue
+    if len(ticker_symbols)>1:
+        user_id = update.effective_user.id
+        data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
+        Avg = data.get("AVERAGE", 0)
+        """ # Merge all results into a single DataFrame
+        combined_df = pd.DataFrame({'Year': sorted([r['Year'] for r in results])})
+        for symbol in ticker_symbols:
+            df_temp = all_results[symbol]
+            combined_df[symbol] = df_temp['% Change'].values """
+        # Merge all results by 'Year'
+        combined_df = pd.DataFrame({'Year': list(range(end_date.year - years_back, end_date.year))})
+
+        for symbol in ticker_symbols:
+            if symbol in all_results:
+                df_temp = all_results[symbol]
+                combined_df = combined_df.merge(df_temp, on='Year', how='left').rename(columns={'% Change': symbol})
+        
+        """ await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False)) """
+        # Calculate and print average percentage change for each stock
+        avg_changes = combined_df.drop(columns=['Year']).mean()
+        ticker_symbols = [symbol for symbol in ticker_symbols if avg_changes[symbol] >= Avg]
+
+    # Plot grouped bar chart
+    # Define grid size dynamically
+    num_tickers = len(ticker_symbols)
+    cols = 2  # You can increase for wider layouts
+    rows = math.ceil(num_tickers / cols)
+
+    # Create subplots grid
+    fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 4 * rows))
+    axes = axes.flatten()  # Flatten for easy indexing
+
+    # Plot each ticker in its subplot
+    for i, symbol in enumerate(ticker_symbols):
+        ax = axes[i]
+        df_temp = all_results[symbol]
+        years = df_temp['Year'].astype(str)
+        changes = df_temp['% Change']
+        colors = ['green' if val > 0 else 'red' for val in changes]
+
+        bars = ax.bar(years, changes, color=colors)
+        
+        # Annotate bars
+        for bar, value in zip(bars, changes):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width() / 2, height,
+                    f"{value:.2f}%", ha='center', va='bottom' if height > 0 else 'top', fontsize=8)
+
+        ax.axhline(0, color='black', linestyle='--', linewidth=0.8)
+        ax.set_title(symbol)
+        ax.set_xlabel("Year")
+        ax.grid(axis='y', linestyle='--', alpha=0.5)
+        if i % cols == 0:
+            ax.set_ylabel("% Change")
+
+    # Remove unused axes (if any)
+    for j in range(i + 1, len(axes)):
+        fig.delaxes(axes[j])
+
+    # Final layout adjustments
+    fig.suptitle(f"% Change from {start_day}/{start_month} to {end_day}/{end_month} (Last {years_back} Years)", fontsize=14)
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.savefig(str(update.effective_chat.id)+"suggestion.png", dpi=300)
+    suggestionimg=str(update.effective_chat.id)+"suggestion.png"
+    logging.info(f"Saved image: {suggestionimg}, Size: {os.path.getsize(suggestionimg)} bytes")
+
+    # Send as media group
+    with open(suggestionimg, 'rb') as f:
+        await context.bot.send_document(chat_id=update.effective_chat.id, document=f)
+    #plt.show()
+    
+    # Clean up
+    os.remove(suggestionimg)
+
 async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
@@ -695,7 +816,7 @@ async def specificStock(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    parse_mode="Markdown",
                                    reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("🗓 ListedYear-2024 (between setting dates)", callback_data='set_SUGGESTED')],                                                
-                                                [InlineKeyboardButton("🗓 ListedYear-2024 (Each Month % change)", callback_data='set_SUGGESTED')],
+                                                [InlineKeyboardButton("🗓 ListedYear-2024 (Each Month % change)", callback_data='checkyearly')],
                                                 [InlineKeyboardButton("Main Menu", callback_data='mainMenu')]
                                             ]))
     return
@@ -722,6 +843,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await suggest(update,context)
     elif query.data == "checksuggested":
         await specificStock(update,context)
+    elif query.data == "checkyearly":
+        await checkyearly(["bhel.NS"],update,context)
     #elif query.data == "suggestCom":
     #    await suggestCom(update,context)
     elif query.data == "ANALYZE":
