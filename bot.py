@@ -682,7 +682,7 @@ async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsettings')],
                                                 [InlineKeyboardButton("Suggest All Commodities(based on settings)", callback_data='suggestCom')],
-                                                [InlineKeyboardButton("Suggest All Stock(based on settings)", callback_data='suggest')],
+                                                [InlineKeyboardButton("Suggest All Stock(Bar Graph chart)\n(1995-2024 on fixed dates)\n(based on settings)", callback_data='suggest')],
                                                 [InlineKeyboardButton("Check Suggested Stock(based on settings)", callback_data='set_SUGGESTED')],
                                                 [InlineKeyboardButton("Analyze Yearly Graph", callback_data='ANALYZE'),InlineKeyboardButton("Help", callback_data='help')]
                                             ]))
