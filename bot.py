@@ -54,7 +54,7 @@ def set_user_payment(user_id):
     today_str = now.strftime("%Y-%m-%d")
     db.collection("TeleSecretAnalysis").document(str(user_id)).set({
         "Membership": False,
-        "FNO": True,
+        "FNO": 'Both',
         "AVERAGE": 20,
         "STARTDATE":10,
         "STARTMONTH":5,
@@ -637,7 +637,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not doc.exists:
             set_user_payment(user_id)
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
-        FNO = data.get("FNO", False)
+        FNO = data.get("FNO", '')
         Membership = data.get("Membership", False)
         Avg = data.get("AVERAGE", 0)
         sd = data.get("STARTDATE", 0)
@@ -731,13 +731,21 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=chat_id,text="Analyzing ALUMINUM...")
         await analysis("ALI=F",1995,"C",update,context)
     elif query.data == 'set_FNO':
+        await context.bot.send_message(chat_id=chat_id,text="Select anyone option:",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Want FNO Stock",callback_data='Yes')],
+                                                [InlineKeyboardButton("Dont want FNO Stock",callback_data='No')],
+                                                [InlineKeyboardButton("Want Both",callback_data='Both')],
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ]))
+    elif query.data == 'Both' or query.data == 'Yes' or query.data == 'No':
         # Toggle FNO directly (example of immediate action)
         user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
         doc = user_ref.get()
         if doc.exists:
-            current_value = doc.to_dict().get("FNO", False)
-            user_ref.update({"FNO": not current_value})
-            await context.bot.send_message(chat_id=chat_id,text=f"✅ FNO set to `{not current_value}`.", parse_mode="Markdown")
+            #current_value = doc.to_dict().get("FNO", False)
+            user_ref.update({"FNO": query.data})
+            await context.bot.send_message(chat_id=chat_id,text=f"✅ FNO set to `{query.data}`.", parse_mode="Markdown")
             await context.bot.send_message(chat_id=chat_id,text=f"Go back to Main Menu.",
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
@@ -857,7 +865,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await client.connect()
             values = []
             #data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
-            FNO = data.get("FNO", False)
+            FNO = data.get("FNO", '')
 
             # Open the CSV file
             with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
@@ -865,8 +873,12 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 next(reader)  # Skip header (row 1)
 
                 for row in reader:
-                    if len(row) >= 4 and row[3].strip().upper() == str(FNO).upper():
+                    if len(row) >= 4 and row[3].strip().upper() == "TRUE" and (FNO == "Yes" or FNO == "Both"):
                         values.append(row[0])
+                        continue
+                    if len(row) >= 4 and row[3].strip().upper() == "FALSE" and (FNO == "No" or FNO == "Both"):
+                        values.append(row[0])
+                        continue
             ticker_symbols = [item + ".NS" for item in values]                        
             await context.bot.send_message(
                 chat_id=chat_id,
@@ -929,7 +941,7 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not doc.exists:
             set_user_payment(user_id)
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
-        FNO = data.get("FNO", False)
+        FNO = data.get("FNO", '')
         Membership = data.get("Membership", False)
         Avg = data.get("AVERAGE", 0)
         sd = data.get("STARTDATE", 0)
@@ -1018,7 +1030,7 @@ async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
 async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         keyboard = [
-            [InlineKeyboardButton("Toggle FNO", callback_data='set_FNO')],
+            [InlineKeyboardButton("Set FNO", callback_data='set_FNO')],
             [InlineKeyboardButton("Set AVERAGE", callback_data='set_AVERAGE')],
             [InlineKeyboardButton("Set STARTDATE", callback_data='set_STARTDATE')],
             [InlineKeyboardButton("Set STARTMONTH", callback_data='set_STARTMONTH')],
