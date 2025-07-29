@@ -351,7 +351,7 @@ async def analysisbargraph(ticker_symbols, start_year, update: Update, context: 
         await context.bot.send_message(
                 chat_id=chat_id,
                 text=f"{tickers}")
-        all_yearly_data = {ticker: download_monthly_data(ticker, start_year, 2024) for ticker in tickers}
+        all_yearly_data = {ticker: download_monthly_databargraph(ticker, start_year, 2024) for ticker in tickers}
         await context.bot.send_message(
                 chat_id=chat_id,
                 text=f"{all_yearly_data}")
@@ -681,10 +681,10 @@ async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    parse_mode="Markdown",
                                    reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("My Settings",callback_data='showsettings'),InlineKeyboardButton("Change Settings",callback_data='setsettings')],
-                                                [InlineKeyboardButton("Suggest All Commodities(based on settings)", callback_data='suggestCom')],
-                                                [InlineKeyboardButton("Suggest All Stock(Bar Graph chart)\n(1995-2024 on fixed dates)\n(based on settings)", callback_data='suggest')],
-                                                [InlineKeyboardButton("Check Suggested Stock(based on settings)", callback_data='set_SUGGESTED')],
-                                                [InlineKeyboardButton("Analyze Yearly Graph", callback_data='ANALYZE'),InlineKeyboardButton("Help", callback_data='help')]
+                                                [InlineKeyboardButton("📊 Suggest All Commodities(based on settings)", callback_data='suggestCom')],
+                                                [InlineKeyboardButton("📊 Suggest All Stock\n🗓 1995–2024 (fixed dates)\n⚙️ Based on settings", callback_data='suggest')],
+                                                [InlineKeyboardButton("📊 Check Suggested Stock(based on settings)", callback_data='set_SUGGESTED')],
+                                                [InlineKeyboardButton("📈 Analyze Yearly Graph", callback_data='ANALYZE'),InlineKeyboardButton("Help", callback_data='help')]
                                             ]))
     return
 
