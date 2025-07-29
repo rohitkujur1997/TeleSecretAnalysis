@@ -450,6 +450,15 @@ async def checkyearly(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_
         
         # Clean up
         os.remove(suggestionimg)
+        await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="✅ *Yearly monty have been generated.!*",
+                parse_mode="Markdown"
+            )
+        await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Go back to Main Menu.",
+                                        reply_markup=InlineKeyboardMarkup([
+                                            [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                        ]))
     except Exception as e:
         await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbols} due to error: {e}",
                                                 reply_markup=InlineKeyboardMarkup([
