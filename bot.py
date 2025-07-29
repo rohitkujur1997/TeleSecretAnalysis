@@ -388,7 +388,7 @@ async def checkyearly(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_
     ticker = yf.Ticker(ticker_symbol)
 
     # Download full 10-year daily data (2014 to 2023)
-    data = ticker.history(start="2014-01-01", end="2025-12-31", interval="1d")
+    data = ticker.history(start="2015-01-01", end="2024-12-31", interval="1d")
     data.index = pd.to_datetime(data.index)
 
     # Prepare figure: 5 rows x 2 columns for 10 years
