@@ -479,6 +479,7 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
     start_date = end_date.replace(year=end_date.year - years_back)
     # Store all results for plotting
     all_results = {}
+    new_ticker_symbols = []
 
     for ticker_symbol in ticker_symbols:
         try:
@@ -502,18 +503,12 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
                         })
                 except Exception as e:
                     await context.bot.send_message(chat_id=update.effective_chat.id,
-                                                   text=f"Skipped {ticker_symbol} {year} due to error: {e}",
-                                                    reply_markup=InlineKeyboardMarkup([
-                                                        [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
-                                                    ]))
+                                                   text=f"Skipped {ticker_symbol} {year} due to error: {e}")
                     continue
 
             all_results[ticker_symbol] = pd.DataFrame(results).sort_values('Year')
         except Exception as e:
-            await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}",
-                                                    reply_markup=InlineKeyboardMarkup([
-                                                        [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
-                                                    ]))
+            await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}. Exception.")
             continue
     if len(ticker_symbols)>1:
         user_id = update.effective_user.id
@@ -537,11 +532,9 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
             else:
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
-                    text=f"No valid data found for {symbol}. Skipping...",
-                    reply_markup=InlineKeyboardMarkup([
-                        [InlineKeyboardButton("Main Menu", callback_data='mainMenu')]
-                    ])
+                    text=f"No valid data found for {symbol}. Skipping..."
                 )
+                continue
         
         """ await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False)) """
         # Calculate and print average percentage change for each stock
