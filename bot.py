@@ -507,10 +507,11 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
                     continue
 
             all_results[ticker_symbol] = pd.DataFrame(results).sort_values('Year')
+            new_ticker_symbols.append(ticker_symbol)
         except Exception as e:
             await context.bot.send_message(chat_id=update.effective_chat.id,text=f"Skipped {ticker_symbol} {year} due to error: {e}. Exception.")
             continue
-    if len(ticker_symbols)>1:
+    if len(new_ticker_symbols)>1:
         user_id = update.effective_user.id
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         Avg = data.get("AVERAGE", 0)
@@ -522,7 +523,7 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
         # Merge all results by 'Year'
         combined_df = pd.DataFrame({'Year': list(range(end_date.year - years_back, end_date.year))})
 
-        for symbol in ticker_symbols:
+        for symbol in new_ticker_symbols:
             """ if symbol in all_results:
                 df_temp = all_results[symbol]
                 combined_df = combined_df.merge(df_temp, on='Year', how='left').rename(columns={'% Change': symbol}) """
@@ -539,11 +540,11 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
         """ await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False)) """
         # Calculate and print average percentage change for each stock
         avg_changes = combined_df.drop(columns=['Year']).mean()
-        ticker_symbols = [symbol for symbol in ticker_symbols if avg_changes[symbol] >= Avg]
+        new_ticker_symbols = [symbol for symbol in new_ticker_symbols if avg_changes[symbol] >= Avg]
 
     # Plot grouped bar chart
     # Define grid size dynamically
-    num_tickers = len(ticker_symbols)
+    num_tickers = len(new_ticker_symbols)
     cols = 2  # You can increase for wider layouts
     rows = math.ceil(num_tickers / cols)
 
@@ -552,7 +553,7 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
     axes = axes.flatten()  # Flatten for easy indexing
 
     # Plot each ticker in its subplot
-    for i, symbol in enumerate(ticker_symbols):
+    for i, symbol in enumerate(new_ticker_symbols):
         ax = axes[i]
         df_temp = all_results[symbol]
         years = df_temp['Year'].astype(str)
