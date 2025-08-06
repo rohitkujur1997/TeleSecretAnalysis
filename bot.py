@@ -2,6 +2,7 @@ import os, asyncio, pytz
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
+from telethon import types
 from telegram import Update, BotCommand, MenuButtonCommands
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler, MessageHandler, filters
 from datetime import datetime
@@ -748,7 +749,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "`/start` – To Start the Bot\n"
             "`/help` – See all available commands 🆘\n\n"
             f"🔗 *Invite Link:* `https://t.me/{context.bot.username}?start={user_id}`"),
-            parse_mode="Markdown"
+            parse_mode="Markdown",
+            reply_markup=types.ReplyKeyboardRemove()
             )
         """
         await context.bot.send_message(chat_id=chat_id,text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n@{update.effective_user.username if update.effective_user.username else 'No username'}'s Menu. (`{user_id}`)",
@@ -1016,7 +1018,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         continue
             if Market == "US":
                 ticker_symbols = [item for item in values]  
-            else Market == "IND":
+            elif Market == "IND":
                 ticker_symbols = [item + ".NS" for item in values]  
             await context.bot.send_message(
                 chat_id=chat_id,
