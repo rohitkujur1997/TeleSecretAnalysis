@@ -999,7 +999,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             FNO = data.get("FNO", '')
             Market = data.get("Market", '')
             if Market == "US":
-                csvfile = "output_dataSNP500.csv"
+                csvfile = "USoutput_dataSNP500.csv"
 
             # Open the CSV file
             with open(csvfile, newline='', encoding='utf-8') as csvfile:
@@ -1127,7 +1127,7 @@ async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
             await client.connect()
             Market = data.get("Market", "")
             if Market == "US":
-                csvfile = "Output_dataSNP500.csv" #US market
+                csvfile = USoutput_dataSNP500.csv" #US market
             with open(csvfile, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 next(reader)  # Skip header (row 1)
