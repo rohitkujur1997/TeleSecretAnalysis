@@ -58,7 +58,6 @@ BALL,Ball Corporation,Materials,FALSE
 BAC,Bank of America,Financials,FALSE
 BAX,Baxter International,Health Care,FALSE
 BDX,Becton Dickinson,Health Care,FALSE
-BRK.B,Berkshire Hathaway,Financials,FALSE
 BBY,Best Buy,Consumer Discretionary,FALSE
 TECH,Bio-Techne,Health Care,FALSE
 BIIB,Biogen,Health Care,FALSE
@@ -73,7 +72,6 @@ BMY,Bristol Myers Squibb,Health Care,FALSE
 AVGO,Broadcom,Information Technology,FALSE
 BR,Broadridge Financial Solutions,Industrials,FALSE
 BRO,Brown & Brown,Financials,FALSE
-BF.B,Brown–Forman,Consumer Staples,FALSE
 BLDR,Builders FirstSource,Industrials,FALSE
 BG,Bunge Global,Consumer Staples,FALSE
 BXP,"BXP, Inc.",Real Estate,FALSE
@@ -158,7 +156,6 @@ DHI,D. R. Horton,Consumer Discretionary,FALSE
 DTE,DTE Energy,Utilities,FALSE
 DUK,Duke Energy,Utilities,FALSE
 DD,DuPont,Materials,FALSE
-EMN,Eastman Chemical Company,Materials,FALSE
 ETN,Eaton Corporation,Industrials,FALSE
 EBAY,eBay Inc.,Consumer Discretionary,FALSE
 ECL,Ecolab,Materials,FALSE
