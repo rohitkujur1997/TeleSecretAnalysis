@@ -55,6 +55,7 @@ def set_user_payment(user_id):
     db.collection("TeleSecretAnalysis").document(str(user_id)).set({
         "Membership": False,
         "FNO": 'Both',
+        "Market": 'IND',
         "AVERAGE": 20,
         "STARTDATE":10,
         "STARTMONTH":5,
@@ -310,9 +311,9 @@ async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                    f"📲 Choose an Option from Main Menu:",
                                    parse_mode="Markdown",
                                    reply_markup=InlineKeyboardMarkup([
-                                                [InlineKeyboardButton("GOLD (Commodity)",callback_data='GOLD'),InlineKeyboardButton("SILVER (Commodity)",callback_data='SILVER')],
-                                                [InlineKeyboardButton("CRUDE OIL (Commodity)",callback_data='CRUDEOIL'),InlineKeyboardButton("NATURAL GAS (Commodity)",callback_data='NATURALGAS')],
-                                                [InlineKeyboardButton("COPPER (Commodity)",callback_data='COPPER'),InlineKeyboardButton("ALUMINUM (Commodity)",callback_data='ALUMINUM')],
+                                                #[InlineKeyboardButton("GOLD (Commodity)",callback_data='GOLD'),InlineKeyboardButton("SILVER (Commodity)",callback_data='SILVER')],
+                                                #[InlineKeyboardButton("CRUDE OIL (Commodity)",callback_data='CRUDEOIL'),InlineKeyboardButton("NATURAL GAS (Commodity)",callback_data='NATURALGAS')],
+                                                #[InlineKeyboardButton("COPPER (Commodity)",callback_data='COPPER'),InlineKeyboardButton("ALUMINUM (Commodity)",callback_data='ALUMINUM')],
                                                 [InlineKeyboardButton("Stock (Equity)", callback_data='set_STOCK')],
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                                             ]))
@@ -723,6 +724,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             set_user_payment(user_id)
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         FNO = data.get("FNO", '')
+        Market = data.get("Market", '')
         Membership = data.get("Membership", False)
         Avg = data.get("AVERAGE", 0)
         sd = data.get("STARTDATE", 0)
@@ -737,6 +739,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📢 *Devs Group:* @\n\n"
             f"💼 *Account ID:* `{user_id}`\n"
             f"🔢 *FNO:* `{FNO}`\n"
+            f"📌 *Market:* `{Market}`\n"
             f"🎟️ *Membership:* `{Membership}`\n"
             f"📊 *Average:* `{Avg}`%\n"
             f"📅 *Start Date:* `{sd}`, {sm} (dd, mm)\n"
@@ -855,6 +858,31 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                                             ]))
+    elif query.data == 'set_Market':
+        await context.bot.send_message(chat_id=chat_id,text="Select Market:",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Want US Market",callback_data='US')],
+                                                [InlineKeyboardButton("DWant IND Market",callback_data='IND')],
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ]))
+    elif query.data == 'US' or query.data == 'IND':
+        # Toggle FNO directly (example of immediate action)
+        user_ref = db.collection("TeleSecretAnalysis").document(str(user_id))
+        doc = user_ref.get()
+        if doc.exists:
+            #current_value = doc.to_dict().get("FNO", False)
+            user_ref.update({"Market": query.data})
+            await context.bot.send_message(chat_id=chat_id,text=f"✅ Market set to `{query.data}`.", parse_mode="Markdown")
+            await context.bot.send_message(chat_id=chat_id,text=f"Go back to Main Menu.",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ]))
+        else:
+            set_user_payment(user_id)
+            await context.bot.send_message(chat_id=chat_id,text="🔄 User profile created. Please try again.",
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
+                                            ]))
     else:
         # Ask for value input in next message
         context.user_data["pending_setting"] = query.data.replace("set_", "")
@@ -961,6 +989,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         Membership = data.get("Membership", False)
         if Membership:
+            csvfile = "output_data.csv"
             client = TelegramClient(StringSession(), api_id, api_hash)
             chat_id = update.effective_chat.id
             user_id = update.effective_user.id
@@ -968,9 +997,12 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             values = []
             #data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
             FNO = data.get("FNO", '')
+            Market = data.get("Market", '')
+            if Market == "US":
+                csvfile = "output_dataSNP500.csv"
 
             # Open the CSV file
-            with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
+            with open(csvfile, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 next(reader)  # Skip header (row 1)
 
@@ -981,7 +1013,10 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     if len(row) >= 4 and row[3].strip().upper() == "FALSE" and (FNO == "No" or FNO == "Both"):
                         values.append(row[0])
                         continue
-            ticker_symbols = [item + ".NS" for item in values]                        
+            if Market == "US":
+                ticker_symbols = [item for item in values]  
+            else:
+                ticker_symbols = [item + ".NS" for item in values]  
             await context.bot.send_message(
                 chat_id=chat_id,
                 text=f"🔍 *Analyzing {len(ticker_symbols)} stocks* based on your FNO settings...",
@@ -1044,6 +1079,7 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             set_user_payment(user_id)
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         FNO = data.get("FNO", '')
+        Market = data.get("Market", '')
         Membership = data.get("Membership", False)
         Avg = data.get("AVERAGE", 0)
         sd = data.get("STARTDATE", 0)
@@ -1054,6 +1090,7 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n"
             f"📋 *@{update.effective_user.username if update.effective_user.username else 'No username'}'s Settings. (`{update.effective_user.id}`):*\n\n"
             f"🔢 *FNO:* `{FNO}`\n"
+            f"📌 *Market:* `{Market}`\n"
             f"📊 *Average:* `{Avg}`%\n"
             f"📅 *Start Date:* `{sd}`, {sm} (dd, mm)\n"
             f"📅 *End Date:* `{ed}`, {em} (dd, mm)\n"
@@ -1083,11 +1120,15 @@ async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
         data = db.collection("TeleSecretAnalysis").document(str(user_id)).get().to_dict()
         Membership = data.get("Membership", False)
         if Membership:
+            csvfile = "output_data.csv" #indain market
             client = TelegramClient(StringSession(), api_id, api_hash)
             chat_id = update.effective_chat.id
             user_id = update.effective_user.id
             await client.connect()
-            with open("output_data.csv", newline='', encoding='utf-8') as csvfile:
+            Market = data.get("Market", "")
+            if Market == "US":
+                csvfile = "Output_dataSNP500.csv" #US market
+            with open(csvfile, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 next(reader)  # Skip header (row 1)
                 for row in reader:
@@ -1100,7 +1141,10 @@ async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
                             ),
                             parse_mode="Markdown"
                         )
-            ticker_symbols = [value+".NS"]
+            if Market == "US":
+                ticker_symbols = [value]
+            else:
+                ticker_symbols = [value+".NS"]
                 #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
             await suggestion(ticker_symbols,update,context)
             await context.bot.send_message(
@@ -1132,6 +1176,7 @@ async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
 async def setsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         keyboard = [
+            [InlineKeyboardButton("Set Market", callback_data='set_Market')],
             [InlineKeyboardButton("Set FNO", callback_data='set_FNO')],
             [InlineKeyboardButton("Set AVERAGE", callback_data='set_AVERAGE')],
             [InlineKeyboardButton("Set STARTDATE", callback_data='set_STARTDATE')],
