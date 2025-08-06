@@ -528,9 +528,20 @@ async def suggestion(ticker_symbols,update:Update,context:ContextTypes.DEFAULT_T
         combined_df = pd.DataFrame({'Year': list(range(end_date.year - years_back, end_date.year))})
 
         for symbol in ticker_symbols:
-            if symbol in all_results:
+            """ if symbol in all_results:
                 df_temp = all_results[symbol]
+                combined_df = combined_df.merge(df_temp, on='Year', how='left').rename(columns={'% Change': symbol}) """
+            df_temp = all_results.get(symbol)
+            if df_temp is not None and not df_temp.empty and 'Year' in df_temp.columns:
                 combined_df = combined_df.merge(df_temp, on='Year', how='left').rename(columns={'% Change': symbol})
+            else:
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text=f"No valid data found for {symbol}. Skipping...",
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton("Main Menu", callback_data='mainMenu')]
+                    ])
+                )
         
         """ await send_long_message(context, update.effective_chat.id,combined_df.to_string(index=False)) """
         # Calculate and print average percentage change for each stock
