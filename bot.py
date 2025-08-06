@@ -739,7 +739,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📢 *Devs Group:* @\n\n"
             f"💼 *Account ID:* `{user_id}`\n"
             f"🔢 *FNO:* `{FNO}`\n"
-            f"📌 *Market:* `{Market}`\n"
+            f"🌍 *Market:* `{Market}`\n"
             f"🎟️ *Membership:* `{Membership}`\n"
             f"📊 *Average:* `{Avg}`%\n"
             f"📅 *Start Date:* `{sd}`, {sm} (dd, mm)\n"
@@ -862,7 +862,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=chat_id,text="Select Market:",
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton("Want US Market",callback_data='US')],
-                                                [InlineKeyboardButton("DWant IND Market",callback_data='IND')],
+                                                [InlineKeyboardButton("Want IND Market",callback_data='IND')],
                                                 [InlineKeyboardButton("Main Menu",callback_data='mainMenu')]
                                             ]))
     elif query.data == 'US' or query.data == 'IND':
@@ -1090,7 +1090,7 @@ async def showsettings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"🙌 *Welcome to the TeleSecretAnalysis Bot!*\n"
             f"📋 *@{update.effective_user.username if update.effective_user.username else 'No username'}'s Settings. (`{update.effective_user.id}`):*\n\n"
             f"🔢 *FNO:* `{FNO}`\n"
-            f"📌 *Market:* `{Market}`\n"
+            f"🌍 *Market:* `{Market}`\n"
             f"📊 *Average:* `{Avg}`%\n"
             f"📅 *Start Date:* `{sd}`, {sm} (dd, mm)\n"
             f"📅 *End Date:* `{ed}`, {em} (dd, mm)\n"
