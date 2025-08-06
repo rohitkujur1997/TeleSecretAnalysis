@@ -1000,7 +1000,8 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
             Market = data.get("Market", '')
             if Market == "US":
                 csvfile = "USoutput_dataSNP500.csv"
-
+            elif  Market == "IND":
+                csvfile = "output_data.csv"
             # Open the CSV file
             with open(csvfile, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
@@ -1015,7 +1016,7 @@ async def suggest(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         continue
             if Market == "US":
                 ticker_symbols = [item for item in values]  
-            else:
+            else Market == "IND":
                 ticker_symbols = [item + ".NS" for item in values]  
             await context.bot.send_message(
                 chat_id=chat_id,
@@ -1128,6 +1129,8 @@ async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
             Market = data.get("Market", "")
             if Market == "US":
                 csvfile = "USoutput_dataSNP500.csv" #US market
+            elif Market == "IND":                
+                csvfile = "output_data.csv" #indain market
             with open(csvfile, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 next(reader)  # Skip header (row 1)
@@ -1143,7 +1146,7 @@ async def suggested(value,update:Update, context: ContextTypes.DEFAULT_TYPE):
                         )
             if Market == "US":
                 ticker_symbols = [value]
-            else:
+            elif Market == "IND":
                 ticker_symbols = [value+".NS"]
                 #await context.bot.send_message(chat_id=chat_id,text=ticker_symbols)
             await suggestion(ticker_symbols,update,context)
